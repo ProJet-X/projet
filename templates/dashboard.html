@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+img { 
+    width:80%; 
+}
+
+a:hover {
+    background-color: orange;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+
+</style>
+</head>
+<body>
+<title>ProJet Dashboard</title>
+<form action="" method="post">
+  <fieldset>
+    <legend>ProJet</legend>
+    Org:<br>
+    <input type="text" name="org" id="org" placeholder="org" autofocus>
+    <br>
+    Repo:<br>
+    <input type="text" name="repo" placeholder="repo">
+    <br><br>
+    <input type="submit" value="Projet">
+    <a href="/logout" target="_top" align="right" >LOGOUT</a>
+  </fieldset>
+</form>
+{% if render %}
+  <h1>DashBoard - {{org}}/{{repo}}</h1>
+  <h2>Totais</h2>
+  <table>
+  <tr>
+  <th>  Issues  </th>
+  <th>  Tarefas  </th>
+  <th>  Pull requests  </th>
+  <th>  Pontos  </th>
+  </tr>
+  <tr>
+  <td>  {{issues}} </td>
+  <td>  {{tasks}} </td>
+  <td>  {{pullRequests}} </td>
+  <td>  {{points}} </td>
+  </tr>
+  </table>
+  <h2>Gráficos</h2>
+  <img src={{ gA }} alt="GraphA" align="middle">
+  <p>{{ a }}</p>
+  <img src={{ gB }} alt="GraphB" align="middle">
+  <p>{{ b }}</p>
+  <img src={{ gC }} alt="GraphC" align="middle">
+  <img src={{ gD }} alt="GraphD" align="middle">
+  <img src={{ gE }} alt="GraphE" align="middle">
+  <img src={{ gF }} alt="GraphF" align="middle">
+  <img src={{ gG }} alt="GraphG" align="middle">
+  <img src={{ gH }} alt="GraphH" align="middle">
+  <img src={{ gI }} alt="GraphI" align="middle">
+  <img src={{ gJ }} alt="GraphJ" align="middle">
+{% else %}
+  <h1>Ops!</h1>
+  <p>Please <a href="/login" target="_top">try again</a></p>
+  <p>If persists, try <a href="/logout" target="_top">later</a></p>
+{% endif %}
+</body>
+</html>
