@@ -1,4 +1,3 @@
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -607,11 +606,6 @@ def dashboard():
             repo = request.form['repo']
             print(org)
             print(repo)
-
-            #org = "TesteProGest"
-            #repo = "progest"
-            #org = "indigotech"
-            #repo = "br-pro120-geniantis-android"
             try:
                 g = Github(session['username'], session['password'])
                 gOrg = g.get_organization(org)
