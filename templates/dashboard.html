@@ -15,6 +15,27 @@ table, th, td {
 }
 
 </style>
+<script type="text/javascript">
+window.onload = function setOrgs() {
+  var myDivOrgs = document.getElementById("myDivOrgs");
+
+  //Create array of options to be added
+  var array = "{{orgs | safe }}";
+
+  //Create and append select list
+  var selectList = document.createElement("select");
+  selectList.setAttribute("id", "mySelect");
+  myDivOrgs.appendChild(selectList);
+
+  //Create and append the options
+  for (var i = 0; i < array.length; i++) {
+      var option = document.createElement("option");
+      option.setAttribute("value", array[i]);
+      option.text = array[i];
+      selectList.appendChild(option);
+  }
+}
+</script>
 </head>
 <body>
 <title>ProJet Dashboard</title>
@@ -22,13 +43,16 @@ table, th, td {
   <fieldset>
     <legend>ProJet</legend>
     Org:<br>
-    <input type="text" name="org" id="org" placeholder="org" autofocus>
+    <input type="text" name="org" id="org" placeholder="org" value="TesteProGest" autofocus>
     <br>
     Repo:<br>
-    <input type="text" name="repo" placeholder="repo">
+    <input type="text" name="repo" value="progest" placeholder="repo">
+
     <br><br>
     <input type="submit" value="Projet">
     <a href="/logout" target="_top" align="right" >LOGOUT</a>
+    <div id="myDivOrgs" align="middle">Orgs</div>
+    <div id="myDivRepos" align="right">Repos {{orgs}}</div>
   </fieldset>
 </form>
 {% if render %}
@@ -61,6 +85,26 @@ table, th, td {
   <img src={{ gH }} alt="GraphH" align="middle">
   <img src={{ gI }} alt="GraphI" align="middle">
   <img src={{ gJ }} alt="GraphJ" align="middle">
+  <h2>Resumo dev time</h2>
+  <table>
+  <tr>
+  <th>  Devs  </th>
+  <th>  IDs  </th>
+  <th>  Pontos  </th>
+  <th>  Criada  </th>
+  <th>  Em desenvolvimento  </th>
+  <th>  Terminada  </th>
+  
+  </tr>
+  <tr>
+  <td>  {{devs}} </td>
+  <td>  {{taskID}} </td>
+  <td>  {{taskPoints}} </td>
+  <td>  {{created_at}} </td>
+  <td>  {{working}} </td>
+  <td>  {{done}} </td>
+  </tr>
+  </table>
 {% else %}
   <h1>Ops!</h1>
   <p>Please <a href="/login" target="_top">try again</a></p>

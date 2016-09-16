@@ -1,9 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
+from matplotlib.finance import date2num
 from datetime import datetime
+#from pymongo import MongoClient
 from imgurpython import ImgurClient
 from github import Github
-from flask import Flask, render_template, session,redirect, url_for, escape, request
+from flask import Flask, render_template, session, redirect, url_for, escape, request
 app = Flask(__name__)
 
 
@@ -21,9 +24,10 @@ gOrg = ""
 gRepo = ""
 
 graphsURLs = []
+eventGraphsURLs = []
 
 # GitHub trace variables
-printEvents = False
+printEvents = True
 
 totalPoints = 0
 totalIssues = 0
@@ -51,6 +55,10 @@ sprintsIssuesDevs = {}
 ## Represents the number of issues per dev in which status
 statusIssuesDevs = {}
 
+## Events
+eventActorTime = []
+events = []
+
 ################################################################# 
 #                    GITHUB - MAPPER 
 #################################################################           
@@ -71,23 +79,27 @@ def issueMapper(i):
     global sprintsIssuesDevs
     global statusIssues
     global statusIssuesDevs
+
+    global events
     
     MAX_POINTS = 100
-    
+
     ## Get sprint if the issue is milestones
-    sprint = i.milestone
-    if sprint == None:
+
+    if i.milestone == None:
         sprint = "Nenhum sprint associado"
     else:
-        sprint = sprint.title
-    print("Sprint da issue: " + sprint)
+        sprint = i.milestone.title
+    print("Sprint da issue #" + str(i.number) + ": " + str(sprint))
+    
     ## Get assignee if the issue is assigned
     developer = i.assignee
+ 
     if developer == None:
         developer = "Nenhum colaborador associado"
     else:
         developer = developer.login
-    print("Colaborador envolvido na issue: " + developer)
+    print("Colaborador envolvido na issue" + str(i.number) + ": " + str(developer))
     if i.raw_data.get("pull_request") == None:
         ## Issues under points process rules
         try:
@@ -147,7 +159,7 @@ def issueMapper(i):
                 else:
                     statusPointsDevs[status] = {developer: pt}
         except:
-            print("Problema nos pontos da issue #" + str(i.number) +" "+str(i.title))
+            print("Problema nos pontos da issue #" + str(i.number) + " " + str(i.title))
             print("!_________________________!_________________________!")
     else:
         print("Pull request: issue #" + str(i.number))
@@ -199,8 +211,10 @@ def issueMapper(i):
         print("Problema com a issue #" + str(i.number) +" "+str(i.title))
         print("!______________!______________!______________!______________!")
         
-    ## Events track
+    #### Events track
     print("Aberta em: " + str(i.created_at))
+    eventActorTime.clear()
+    eventActorTime.append({'event':'creation', 'created_at': str(i.created_at)})
     if printEvents == True:
         for e in i.get_events():
             if e.event == "assigned" or e.event == "unassigned":
@@ -210,21 +224,32 @@ def issueMapper(i):
             print(str(e.event) + " por " + str(actor) + " em: " + str(e.created_at))
             if e.event == "closed" or e.event == "reopened":
                 print(" Fechada em: " + str(i.closed_at))
+                detail = {'closed_at':str(i.closed_at)}
             elif e.event == "labeled" or e.event == "unlabeled":
                 if (e.raw_data.get("label").get("name").rfind("-") != -1):
                     if int(e.raw_data.get("label").get("name").split(" - ")[0]) > 0:
                         print(" Deslocado para o estado: " + str(e.raw_data.get("label").get("name").split(" - ")[1]))
+                    detail = {'status':e.raw_data.get("label").get("name")}
                 else:
                     print(" (Des)Associada ao label: " + str(e.raw_data.get("label").get("name")))
+                    detail = {'label':e.raw_data.get("label").get("name")}
             elif e.event == "milestoned" or e.event == "demilestoned":
                 print(" (Des)Associada ao sprint: " + str(e.raw_data.get("milestone").get("title")))
+                detail = {'milestone':e.raw_data.get("milestone").get("title")}
             elif e.event == "assigned" or e.event == "unassigned":
                 print(" (Des)Associado ao colaborador: " + str(e.raw_data.get("assignee").get("login")))
                 print(" Pelo colaborador: " + str(e.raw_data.get("assigner").get("login")))
+                detail = {'assignee':e.raw_data.get("assignee").get("login"), 'assigner':e.raw_data.get("assigner").get("login")}
             elif e.event == "renamed":
                 print(" Nome alterado de: " + str(e.raw_data.get("rename").get("from")))
                 print(" Para: " + str(e.raw_data.get("rename").get("to")))
-    
+                detail = {'from':e.raw_data.get("rename").get("from"), 'to':e.raw_data.get("rename").get("to")}
+            #print("Details " + str(detail))
+            ## Events with actor and time
+            eventActorTime.append({'event':e.event,'actor':actor,'created_at': str(e.created_at), 'detail':detail.copy()})
+            #print("EAT " + str(eventActorTime))
+    events.append(eventActorTime.copy())
+    print("Appending events")
     print("\n")
 
 #################################################################
@@ -249,9 +274,8 @@ def points(gRepo):
     global statusIssuesDevs
     
     try:
-        issue = ""
-        #issue = input("Issue(opt): ")
-        if issue == "":
+        issueId = ""
+        if issueId == "":
             ## Lookup for all issues in repo
             lookup = True
             issueCounter = 1
@@ -259,8 +283,10 @@ def points(gRepo):
                 try:
                     issue = gRepo.get_issue(issueCounter)
                     issueMapper(issue)
+                    print("issue mapped")
                     issueCounter = issueCounter + 1
                 except:
+                    print("Last issue")
                     lookup = False
                 
             print("Pontos totais: " + str(totalPoints))
@@ -289,7 +315,7 @@ def points(gRepo):
             for stID in statusIssuesDevs:
                 print("Numero de tarefas do colaborador no status: " + str(stID) + ": " + str(statusIssuesDevs[stID]))
         else:
-            issue = gRepo.get_issue(int(issue))
+            issue = gRepo.get_issue(issueId)
             issueMapper(issue)
     except:
         print("Issue não existe")
@@ -343,13 +369,13 @@ def autolabel(rects):
 #################################################################
 #                        CHARTS
 #################################################################
-def simplePlot(x,y):
+def simplePlot(x,y,labelX="time",labelY="event",title=None):
 
     plt.plot(x, y)
 
-    plt.xlabel('time (s)')
-    plt.ylabel('voltage (mV)')
-    plt.title('About as simple as it gets, folks')
+    plt.xlabel(labelX)
+    plt.ylabel(labelY)
+    plt.title(title)
     plt.grid(True)
     plt.savefig("simpleChart.png", bbox_inches='tight')
     plt.clf()
@@ -434,6 +460,43 @@ def stackedBarChart(stackedBars):
 #                        CHARTS        
 #################################################################
 
+def f(client, events):
+    time = []
+    eventStatus = []
+    eventTag = []
+    for eAT in events:
+        for eat in eAT:
+            if eat['event'] == "labeled" or eat['event'] == "unlabeled":
+                print(eat['event'])
+                try:
+                    status = eat['detail']['status']
+                    print("HOW")
+                            
+                    if (status.rfind("-") != -1):
+                        print("HEY :" + str(status))
+                        if int(eat['detail']['status'].split(" - ")[0]) >= 0:
+                            print("LETS")
+                            eventStatus.append(int(status.split(" - ")[0]))
+                            date_string = str(eat['created_at'])
+                            print("GO " + str(date_string))
+                            float_days = date2num(datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S%f'))
+                            time.append(float_days)
+                            print("KILL")
+                        
+                except:
+                    print("HEYEEEEEEEE")
+                    eventTag.append(eat)
+                    time.append(str(eat['created_at']))
+            else:
+                print("KILL it")
+            if len(time) > 0 and len(eventStatus) > 0:
+                simplePlot(time, eventStatus)
+                image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\simpleChart.png', anon=False)
+                return image['link']
+#################################################################    
+#                        CHARTS        
+#################################################################
+
 def generateCharts():
     global totalPoints
     global totalIssues
@@ -452,6 +515,9 @@ def generateCharts():
     global statusPointsDevs
 
     global graphsURLs
+    global eventGraphsURLs
+    global eventActorTime
+    global events
     
     try:
         client = authenticateImgur()
@@ -461,7 +527,8 @@ def generateCharts():
     print("TimeGraphs")
     print(startTimeGraphs)
     #percents = [totalPoints, totalIssues, totalPullRequest]
-    
+
+
     pieCharts = [sprintsIssues, sprintsPoints]
     for pie in pieCharts:
         pieChart(pie)
@@ -488,17 +555,67 @@ def generateCharts():
     #    link_img = image['link']
     #    print(link_img)
     #    graphsURLs.append(link_img)
-
-    
+    time = []
+    eventStatus = []
+    eventTag = []
+    print("eventActorTime" + str(eventActorTime) + "\n" + str(len(events)))
+    for eAT in events:
+        for eat in eAT:
+            if eat['event'] == "labeled" or eat['event'] == "unlabeled":
+                print(eat['event'])
+                try:
+                    status = eat['detail']['status']
+                    print("HOW")
+                            
+                    if (status.rfind("-") != -1):
+                        print("HEY :" + str(status))
+                        if int(eat['detail']['status'].split(" - ")[0]) >= 0:
+                            print("LETS")
+                            eventStatus.append(int(status.split(" - ")[0]))
+                            date_string = str(eat['created_at'])
+                            print("GO " + str(date_string))
+                            try:
+                                float_days = date2num(datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S%f'))
+                                time.append(str(float_days))
+                            except:
+                                time.append(str(date_string))
+                            print("KILL")
+                        
+                except:
+                    print("HEYEEEEEEEE")
+                    #eventTag.append(eat)
+                    #time.append(str(eat['created_at']))
+                    
+            else:
+                print("!!!!!!")
+            print("P")
+            print(time)
+            print("E")
+            print(eventStatus)
+            print("L")
+            print(eventTag)
+            print("O")
+            print(eventGraphsURLs)
+            if len(time) > 0 and len(eventStatus) > 0:
+                print("amor")
+                print(time)
+                simplePlot(time, eventStatus)
+                image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\simpleChart.png', anon=False)
+                link_img = image['link']
+                print("Uploaded")
+                print(link_img)
+                eventGraphsURLs.append(link_img)
+    print("Final Graficos")
+  
     print(datetime.now() - startTimeGraphs)
     
 #################################################################
 #                        PROCESS    
 #################################################################
 
-def startMetrics(gRepo):
-    global printEvents
+def startMetrics():
 
+    global gRepo
     i=0
     print("Colaboradores do repositorio:")
     for x in gRepo.get_collaborators():
@@ -507,12 +624,7 @@ def startMetrics(gRepo):
     for x in gRepo.get_assignees():
         print(x.login)
     print("\n")
-    #print("Print events?")
-    #v = input("(y/Y)(opt)?: ")
-    #if v == "y" or v == "Y":
-    #    printEvents = True
-    #else:
-    #    printEvents = False
+
     startTimeMetrics = datetime.now()
     print("TimeMetrics")
     print(startTimeMetrics)
@@ -527,12 +639,25 @@ def startMetrics(gRepo):
 
 def renderDashboard(org, repo):
     global graphsURLs
+    global eventGraphsURLs
     global gRepo
     global gOrg
 
     global totalPoints
     global totalIssues
     global totalPullRequest
+    
+    global sprintsPoints
+    global assigneesPoints
+    global sprintsPointsDevs
+    global statusPoints
+    global statusPointsDevs
+    
+    global sprintsIssues
+    global assigneesIssues
+    global sprintsIssuesDevs
+    global statusIssues
+    global statusIssuesDevs
     
     print(org)
     print(repo)
@@ -550,10 +675,7 @@ def renderDashboard(org, repo):
         g3=graphsURLs[3]
         g4=graphsURLs[4]
         g5=graphsURLs[5]
-        g6=0
-        g7=0
-        g8=0
-        g9=0
+ 
     except:
         g0=0
         g1=0
@@ -561,23 +683,44 @@ def renderDashboard(org, repo):
         g3=0
         g4=0
         g5=0
-        g6=0
-        g7=0
-        g8=0
-        g9=0
+      
     
     issues=totalIssues
     tasks=totalIssues - totalPullRequest
     pullRequests=totalPullRequest
-    points=totalPoints
+    totalPoints=totalPoints
 
-    print(issues, tasks, pullRequests, points, org, repo, a, b,
-          g0, g1, g2, g3, g4, g5, g6, g7, g8, g9)  
-    return render_template('dashboard.html', render=True, issues=issues, tasks=tasks,
-                           pullRequests=pullRequests, points=points,
+    print("Events graphs")
+    print(eventGraphsURLs)
+    try:
+        g6 = eventGraphsURLs[0]
+        g7 = eventGraphsURLs[1]
+        g8 = eventGraphsURLs[2]
+        g9 = eventGraphsURLs[3]
+    except:
+        g6=0
+        g7=0
+        g8=0
+        g9=0
+
+    devs=1
+    taskId=2
+    taskPoints=3
+    created_at=4
+    working=5
+    done=6
+  
+    orgs=['a',"b","c","d"]
+    print(orgs, issues, tasks, pullRequests, taskPoints, org, repo, a, b,
+          g0, g1, g2, g3, g4, g5, g6, g7, g8, g9)
+    return render_template('dashboard.html', render=True, orgs=orgs,
+                           issues=issues, tasks=tasks,
+                           pullRequests=pullRequests,totalPoints=totalPoints,
                            org=org, repo=repo, a=a, b=b,
                            gA=g0, gB=g1, gC=g2, gD=g3, gE=g4,
-                           gF=g5, gG=g6, gH=g7, gI=g8, gJ=g9)
+                           gF=g5, gG=g6, gH=g7, gI=g8, gJ=g9,
+                           devs=devs,taskId=taskId,taskPoints=taskPoints,
+                           created_at=created_at,working=working,done=done)
 
 #################################################################
 #                       PROJET WEB PLAT AUTH
@@ -597,15 +740,21 @@ def auth():
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
 
+    global gRepo
+    
     org = ""
     repo = ""
+    issueId = ""
     if auth():
         if request.method == 'POST':
             print("Nova pesquisa")
             org = request.form['org']
             repo = request.form['repo']
+            #issueId = request.form['issueId']
+            #if len(issueId) <= 0:
             print(org)
             print(repo)
+            #print(len(issueId))
             try:
                 g = Github(session['username'], session['password'])
                 gOrg = g.get_organization(org)
@@ -614,10 +763,11 @@ def dashboard():
                 print("Existe Repositório")
                 try:
                     print("\n")
-                    startMetrics(gRepo)
+                    startMetrics()
+                    print("Metrics-->Charts")
+                    generateCharts()
                 except:
                     print("Ocorreu um erro")
-                generateCharts()
             except:
                 print("Erro org ou repo")
                 
@@ -643,8 +793,7 @@ def login():
         print("TimePostLogin")
         print(startTimePostLogin)
         try:
-            g = Github(request.form['username'],request.form['password'])
-            login = g.get_user().login
+            login = Github(request.form['username'],request.form['password']).get_user().login
             session['username'] = login
             session['password'] = request.form['password']
         
@@ -672,7 +821,7 @@ def logout():
 #################################################################
 
 # set the secret key.  keep this really secret:
-#app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 if __name__ == "__main__":
     app.run()
