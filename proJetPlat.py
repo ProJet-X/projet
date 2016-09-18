@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import datetime
-from matplotlib.finance import date2num
+import operator
+import time
+import matplotlib.dates as mdates
+from pymongo import MongoClient
 from datetime import datetime
-#from pymongo import MongoClient
 from imgurpython import ImgurClient
 from github import Github
 from flask import Flask, render_template, session, redirect, url_for, escape, request
@@ -28,9 +29,12 @@ eventGraphsURLs = []
 
 # GitHub trace variables
 printEvents = True
+uploadImage = False
 
 totalPoints = 0
 totalIssues = 0
+totalIssuesWithPoints = 0
+totalIssuesWithoutPoints = 0
 totalPullRequest = 0
 
 ## Represents the points per milestones
@@ -55,9 +59,22 @@ sprintsIssuesDevs = {}
 ## Represents the number of issues per dev in which status
 statusIssuesDevs = {}
 
-## Events
+## Events of each issue
 eventActorTime = []
+## General events
 events = []
+
+################################################################# 
+#                    DataBase Mongo 
+#################################################################
+clientMongo = MongoClient()
+## Could be
+# client = MongoClient('mongodb://localhost:27017/')
+
+db = clientMongo.test_database
+
+eventsColl = db.events
+
 
 ################################################################# 
 #                    GITHUB - MAPPER 
@@ -66,6 +83,8 @@ def issueMapper(i):
     
     global totalPoints
     global totalIssues
+    global totalIssuesWithPoints
+    global totalIssuesWithoutPoints
     global totalPullRequest
     
     global sprintsPoints
@@ -85,21 +104,19 @@ def issueMapper(i):
     MAX_POINTS = 100
 
     ## Get sprint if the issue is milestones
-
+    
     if i.milestone == None:
-        sprint = "Nenhum sprint associado"
+        sprint = "Unk Sprint"
     else:
         sprint = i.milestone.title
     print("Sprint da issue #" + str(i.number) + ": " + str(sprint))
     
     ## Get assignee if the issue is assigned
-    developer = i.assignee
- 
-    if developer == None:
-        developer = "Nenhum colaborador associado"
+    if i.assignee == None:
+        developer = "Unk Dev"
     else:
-        developer = developer.login
-    print("Colaborador envolvido na issue" + str(i.number) + ": " + str(developer))
+        developer = i.assignee.login
+    print("Colaborador envolvido na issue #" + str(i.number) + ": " + str(developer))
     if i.raw_data.get("pull_request") == None:
         ## Issues under points process rules
         try:
@@ -111,7 +128,8 @@ def issueMapper(i):
             elif i.title.rfind("- Pt") != -1:
                 pt = int(i.title.split(" - Pt")[1])
             else:
-                 print("Issue #" + str(i.number) + " sem estimativa de pontos de esforço:")
+                totalIssuesWithoutPoints = totalIssuesWithoutPoints + 1
+                print("Issue #" + str(i.number) + " sem estimativa de pontos de esforço:")
             ## Points validation
             if pt > MAX_POINTS:
                 print("Issue #" + str(i.number) + " com pontos acima do limite estipulado")       
@@ -124,6 +142,7 @@ def issueMapper(i):
                 print("Pontuação alterada para: " + str(pt))
             print("Pontos da issue #" + str(i.number) + ", " + str(i.title) + ": " + str(pt))
             totalPoints = totalPoints + pt
+            totalIssuesWithPoints = totalIssuesWithPoints + 1
             ## Milestone points
             if list(sprintsPoints.keys()).count(sprint) == 1:
                 sprintsPoints[sprint] = sprintsPoints[sprint] + pt
@@ -250,6 +269,7 @@ def issueMapper(i):
             #print("EAT " + str(eventActorTime))
     events.append(eventActorTime.copy())
     print("Appending events")
+    print(str(len(events)))
     print("\n")
 
 #################################################################
@@ -357,74 +377,122 @@ def authenticateImgur():
 
 
 #################################################################
-#                        CHARTS    
-#################################################################
-
-def autolabel(rects):
-    # attach some text labels
-    for rect in rects:
-        height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width()/2., 1.05*height,'%d' % int(height),ha='center', va='bottom')
-
-#################################################################
 #                        CHARTS
 #################################################################
-def simplePlot(x,y,labelX="time",labelY="event",title=None):
 
+def lineChart(x,y,labelX="time",labelY="event",title=None):
+    global uploadImage
+
+    print("Line chart")    
     plt.plot(x, y)
-
     plt.xlabel(labelX)
     plt.ylabel(labelY)
     plt.title(title)
     plt.grid(True)
-    plt.savefig("simpleChart.png", bbox_inches='tight')
-    plt.clf()
+    print("Line ploted")
+    if uploadImage == True:
+        plt.savefig('simpleChart.png', bbox_inches='tight')
+        plt.clf()
+    else:
+        plt.savefig('pie_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+    print("Line saved")
 
 #################################################################
 #                        CHARTS
 #################################################################
 
 def pieChart(pie):
+    global uploadImage
+
+    print("Pie chart")    
     print(str(pie))
-    labels = pie.keys()
+    try:
+        labels = pie.keys()
+    except:
+        labels = [k for k, v in pie]
+
     print(labels)
-    total = sum(pie.values())
-    fracs = [v / total for v in pie.values()]
+    try:
+        total = sum(pie.values())
+        fracs = [v / total for v in pie.values()]
+    except:
+        total = sum([v for k, v in pie])
+        fracs = [v / total for v in [v for k, v in pie]]
+
     print(fracs)
     
     plt.pie(fracs ,labels=labels, autopct='%1.1f%%', shadow=False, startangle=70)
     plt.axis('equal')
-    plt.savefig('foo.png', bbox_inches='tight')
-    plt.clf()
+    print("Pie ploted")
+    if uploadImage == True:
+        plt.savefig('pie.png', bbox_inches='tight')
+        plt.clf()
+    else:
+        plt.savefig('pie_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+    print("Pie saved")
+
 
 #################################################################
 #                        CHARTS    
 #################################################################_____
 #                           |                             |     |_a_b_| with legends! 
 # Could be simple bar graph |__:__:__ or a multiBar per x |__::__::____
-#http://matplotlib.org/examples/api/barchart_demo.html
-def barChart(bars):
-    print(str(bars))
-    # a bar plot with errorbars
-    labelsX = bars.keys()
+#  http://matplotlib.org/examples/api/barchart_demo.html
+def barChart(barA, barB, legendA="A", legendB="B" ,yLable='Scores'):
+    global uploadImage
+    
+    print("Bar chart")
+    print(barA)
+    print(barB)
+    try:
+        labelsX = barA.keys()
+    except:
+        labelsX = [k for k, v in barA]
+        
     print(labelsX)
-    means = bars.values()
-    print(means)
-    N = len(bars.keys())
+    try:
+        meansA = barA.values()
+    except:
+        meansA = [v for k, v in barA]
+    print(meansA)
+    
+    N = len(barA.keys())
+    try:
+        meansB = barB.values()
+    except:
+        meansB = [v for k, v in barA]
+    print(meansB)
 
     ind = np.arange(N)  # the x locations for the groups
     width = 0.35       # the width of the bars
 
     fig, ax = plt.subplots()
-    ax.bar(ind, means, width, color='r')
+    rects1 = ax.bar(ind, meansA, width, color='r')
+
+    rects2 = ax.bar(ind + width, meansB, width, color='y')
 
     # add some text for labels, title and axes ticks
-    ax.set_ylabel('Scores')
+    ax.set_ylabel(yLable)
     ax.set_title('Scores by group and gender')
     ax.set_xticks(ind + width)
     ax.set_xticklabels(labelsX)
-    plt.savefig('bar.png', bbox_inches='tight')
-    plt.clf()
+    ax.legend((rects1[0], rects2[0]), (legendA, legendB))
+
+    def autolabel(rects):
+        # attach some text labels
+        for rect in rects:
+            height = rect.get_height()
+            ax.text(rect.get_x() + rect.get_width()/2., 1.05*height,'%d' % int(height),ha='center', va='bottom')
+
+    autolabel(rects1)
+    autolabel(rects2)
+    print("Bar ploted")
+    if uploadImage == True:
+        plt.savefig('bar.png', bbox_inches='tight')
+        plt.clf()
+    else:
+        plt.savefig('bar_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+    print("Bar saved")
 
 #################################################################
 #                        CHARTS    
@@ -460,39 +528,10 @@ def stackedBarChart(stackedBars):
 #                        CHARTS        
 #################################################################
 
-def f(client, events):
-    time = []
-    eventStatus = []
-    eventTag = []
-    for eAT in events:
-        for eat in eAT:
-            if eat['event'] == "labeled" or eat['event'] == "unlabeled":
-                print(eat['event'])
-                try:
-                    status = eat['detail']['status']
-                    print("HOW")
-                            
-                    if (status.rfind("-") != -1):
-                        print("HEY :" + str(status))
-                        if int(eat['detail']['status'].split(" - ")[0]) >= 0:
-                            print("LETS")
-                            eventStatus.append(int(status.split(" - ")[0]))
-                            date_string = str(eat['created_at'])
-                            print("GO " + str(date_string))
-                            float_days = date2num(datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S%f'))
-                            time.append(float_days)
-                            print("KILL")
-                        
-                except:
-                    print("HEYEEEEEEEE")
-                    eventTag.append(eat)
-                    time.append(str(eat['created_at']))
-            else:
-                print("KILL it")
-            if len(time) > 0 and len(eventStatus) > 0:
-                simplePlot(time, eventStatus)
-                image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\simpleChart.png', anon=False)
-                return image['link']
+
+
+
+
 #################################################################    
 #                        CHARTS        
 #################################################################
@@ -514,10 +553,12 @@ def generateCharts():
     global sprintsPointsDevs
     global statusPointsDevs
 
-    global graphsURLs
-    global eventGraphsURLs
     global eventActorTime
     global events
+    
+    global graphsURLs
+    global eventGraphsURLs
+    global uploadImage
     
     try:
         client = authenticateImgur()
@@ -531,21 +572,29 @@ def generateCharts():
 
     pieCharts = [sprintsIssues, sprintsPoints]
     for pie in pieCharts:
-        pieChart(pie)
-        image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\foo.png', anon=False)
-        link_img = image['link']
-        print("Uploaded")
-        print(link_img)
-        graphsURLs.append(link_img)
+        pieChart(sorted(pie.items(), key=operator.itemgetter(0)))
+        if uploadImage == True:
+            image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\foo.png', anon=False)
+            link_img = image['link']
+            print("Pie uploaded")
+            print(link_img)
+            graphsURLs.append(link_img)
+            print("Pie appended")
 
-    barCharts = [assigneesIssues, statusIssues, assigneesPoints, statusPoints]
-    for bar in barCharts:
-        barChart(bar)
-        image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\bar.png', anon=False)
-        link_img = image['link']
-        print("Uploaded")
-        print(link_img)
-        graphsURLs.append(link_img)
+    barCharts = {'assignees':[assigneesIssues, assigneesPoints ],'status':[statusIssues, statusPoints]}
+    for key, value in barCharts.items():      
+        print(value[0])
+        print(value[1])
+        barA = sorted(value[0].items(), key=operator.itemgetter(0))
+        barB = sorted(value[1].items(), key=operator.itemgetter(0))
+        barChart(barA, barB, "Tarefas", "Pontos")
+        if uploadImage == True:
+            image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\bar.png', anon=False)
+            link_img = image['link']
+            print("Bar uploaded")
+            print(link_img)
+            graphsURLs.append(link_img)
+            print("Bar appended")
 
     
     #stackedBarCharts = [sprintsIssuesDevs, statusIssuesDevs, sprintsPointsDevs, statusPointsDevs]
@@ -565,48 +614,56 @@ def generateCharts():
                 print(eat['event'])
                 try:
                     status = eat['detail']['status']
-                    print("HOW")
-                            
+                          
                     if (status.rfind("-") != -1):
-                        print("HEY :" + str(status))
+                        print("Status :" + str(status))
                         if int(eat['detail']['status'].split(" - ")[0]) >= 0:
-                            print("LETS")
+                            
                             eventStatus.append(int(status.split(" - ")[0]))
                             date_string = str(eat['created_at'])
-                            print("GO " + str(date_string))
+                            print("Date " + str(date_string))
                             try:
-                                float_days = date2num(datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S%f'))
-                                time.append(str(float_days))
+                                int_time = int(time.mktime(datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S").timetuple()))
+                                print("int_time: " + str(int_time))
+                                time.append(str(int_time))
                             except:
                                 time.append(str(date_string))
-                            print("KILL")
+                            print("here")
                         
                 except:
-                    print("HEYEEEEEEEE")
+                    print("Error map events to charts")
                     #eventTag.append(eat)
                     #time.append(str(eat['created_at']))
                     
             else:
                 print("!!!!!!")
-            print("P")
-            print(time)
-            print("E")
-            print(eventStatus)
-            print("L")
-            print(eventTag)
-            print("O")
-            print(eventGraphsURLs)
+                
+            print("Time:")
+            print(str(len(time)))
+            print("EventStatus")
+            print(str(len(eventStatus)))
+            print("EventTag")
+            print(str(len(eventTag)))
+            print("EventGraphsURLs")
+            print(str(len(eventGraphsURLs)))
+        try:
             if len(time) > 0 and len(eventStatus) > 0:
-                print("amor")
                 print(time)
-                simplePlot(time, eventStatus)
+                print(len(eventStatus))
+                lineChart(time, eventStatus)
+                print("Ploted")
+            if uploadImage == True:
                 image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\simpleChart.png', anon=False)
+                print(image)
                 link_img = image['link']
-                print("Uploaded")
+                print("Line uploaded")
                 print(link_img)
                 eventGraphsURLs.append(link_img)
-    print("Final Graficos")
-  
+                print("Line appended")
+                
+        except:
+            print("Simple chart error")
+    print("Final graficos")
     print(datetime.now() - startTimeGraphs)
     
 #################################################################
@@ -646,6 +703,8 @@ def renderDashboard(org, repo):
     global totalPoints
     global totalIssues
     global totalPullRequest
+    global totalIssuesWithPoints
+    global totalIssuesWithoutPoints
     
     global sprintsPoints
     global assigneesPoints
@@ -666,15 +725,16 @@ def renderDashboard(org, repo):
     print(gRepo)
 
     print(graphsURLs)
-    a = "Pontos por desenvolvedor"
-    b = "Numero de tarefas por sprint"
+    a = "Comparação por colaborador"
+    b = "Comparação por sprint"
+    charts = []
     try:
-        g0=graphsURLs[0]
-        g1=graphsURLs[1]
-        g2=graphsURLs[2]
-        g3=graphsURLs[3]
-        g4=graphsURLs[4]
-        g5=graphsURLs[5]
+        charts.append(graphsURLs[0])
+        charts.append(graphsURLs[1])
+        charts.append(graphsURLs[2])
+        charts.append(graphsURLs[3])
+        charts.append(graphsURLs[4])
+        charts.append(graphsURLs[5])
  
     except:
         g0=0
@@ -684,19 +744,21 @@ def renderDashboard(org, repo):
         g4=0
         g5=0
       
-    
-    issues=totalIssues
-    tasks=totalIssues - totalPullRequest
-    pullRequests=totalPullRequest
-    totalPoints=totalPoints
+    issuesIndicators = []
+    issuesIndicators.append(totalIssues)
+    issuesIndicators.append(totalIssues - totalPullRequest)
+    issuesIndicators.append(totalPullRequest)
+    issuesIndicators.append(totalPoints)
+    issuesIndicators.append(totalIssuesWithPoints)
+    issuesIndicators.append(totalIssuesWithPoints)
 
     print("Events graphs")
     print(eventGraphsURLs)
     try:
-        g6 = eventGraphsURLs[0]
-        g7 = eventGraphsURLs[1]
-        g8 = eventGraphsURLs[2]
-        g9 = eventGraphsURLs[3]
+        charts.append(eventGraphsURLs[0])
+        charts.append(eventGraphsURLs[1])
+        charts.append(eventGraphsURLs[2])
+        charts.append(eventGraphsURLs[3])
     except:
         g6=0
         g7=0
@@ -711,14 +773,11 @@ def renderDashboard(org, repo):
     done=6
   
     orgs=['a',"b","c","d"]
-    print(orgs, issues, tasks, pullRequests, taskPoints, org, repo, a, b,
-          g0, g1, g2, g3, g4, g5, g6, g7, g8, g9)
+    print(orgs, issuesIndicators, org, repo, a, b,charts)
     return render_template('dashboard.html', render=True, orgs=orgs,
-                           issues=issues, tasks=tasks,
-                           pullRequests=pullRequests,totalPoints=totalPoints,
+                           issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
-                           gA=g0, gB=g1, gC=g2, gD=g3, gE=g4,
-                           gF=g5, gG=g6, gH=g7, gI=g8, gJ=g9,
+                           charts=charts,
                            devs=devs,taskId=taskId,taskPoints=taskPoints,
                            created_at=created_at,working=working,done=done)
 
@@ -734,7 +793,7 @@ def auth():
         return False
 
 #################################################################
-#                       PROJET WEB PLAT
+#                           PROJET WEB
 #################################################################
 
 @app.route('/dashboard', methods=['GET', 'POST'])

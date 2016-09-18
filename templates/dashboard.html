@@ -35,6 +35,7 @@ window.onload = function setOrgs() {
       selectList.appendChild(option);
   }
 }
+
 </script>
 </head>
 <body>
@@ -47,9 +48,9 @@ window.onload = function setOrgs() {
     <br>
     Repo:<br>
     <input type="text" name="repo" value="progest" placeholder="repo">
-
     <br><br>
-    <input type="submit" value="Projet">
+    <input type="submit" value="Projet"><br>
+    <br>
     <a href="/logout" target="_top" align="right" >LOGOUT</a>
     <div id="myDivOrgs" align="middle">Orgs</div>
     <div id="myDivRepos" align="right">Repos {{orgs}}</div>
@@ -57,34 +58,38 @@ window.onload = function setOrgs() {
 </form>
 {% if render %}
   <h1>DashBoard - {{org}}/{{repo}}</h1>
-  <h2>Totais</h2>
+  <h2>Indicadores gerais</h2>
   <table>
   <tr>
   <th>  Issues  </th>
   <th>  Tarefas  </th>
   <th>  Pull requests  </th>
   <th>  Pontos  </th>
+  <th>  Tarefas com esforço estimado  </th>
+  <th>  Tarefas sem esforço estimado   </th>
   </tr>
   <tr>
-  <td>  {{issues}} </td>
-  <td>  {{tasks}} </td>
-  <td>  {{pullRequests}} </td>
-  <td>  {{points}} </td>
+  <td>  {{issuesIndicators[0]}} </td>
+  <td>  {{issuesIndicators[1]}} </td>
+  <td>  {{issuesIndicators[2]}} </td>
+  <td>  {{issuesIndicators[3]}} </td> 
+  <td>  {{issuesIndicators[4]}} </td>
+  <td>  {{issuesIndicators[5]}} </td>
   </tr>
   </table>
   <h2>Gráficos</h2>
-  <img src={{ gA }} alt="GraphA" align="middle">
+  <img src={{ charts[0] }} alt="ChartA" align="middle">
   <p>{{ a }}</p>
-  <img src={{ gB }} alt="GraphB" align="middle">
+  <img src={{ charts[1] }} alt="ChartB" align="middle">
   <p>{{ b }}</p>
-  <img src={{ gC }} alt="GraphC" align="middle">
-  <img src={{ gD }} alt="GraphD" align="middle">
-  <img src={{ gE }} alt="GraphE" align="middle">
-  <img src={{ gF }} alt="GraphF" align="middle">
-  <img src={{ gG }} alt="GraphG" align="middle">
-  <img src={{ gH }} alt="GraphH" align="middle">
-  <img src={{ gI }} alt="GraphI" align="middle">
-  <img src={{ gJ }} alt="GraphJ" align="middle">
+  <img src={{ charts[2] }} alt="ChartC" align="middle">
+  <img src={{ charts[3] }} alt="ChartD" align="middle">
+  <img src={{ charts[4] }} alt="ChartE" align="middle">
+  <img src={{ charts[5] }} alt="ChartF" align="middle">
+  <img src={{ charts[6] }} alt="ChartG" align="middle">
+  <img src={{ charts[7] }} alt="ChartH" align="middle">
+  <img src={{ charts[8] }} alt="ChartI" align="middle">
+  <img src={{ charts[9] }} alt="ChartJ" align="middle">
   <h2>Resumo dev time</h2>
   <table>
   <tr>

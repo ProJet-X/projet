@@ -1,0 +1,12 @@
+from pymongo import MongoClient
+
+################################################################# 
+#                    DataBase Mongo 
+#################################################################
+clientMongo = MongoClient()
+## Could be
+# client = MongoClient('mongodb://localhost:27017/')
+
+db = clientMongo.test_database
+
+events = db.events
