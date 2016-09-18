@@ -1,14 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import operator
-import time
-import matplotlib.dates as mdates
-from pymongo import MongoClient
-from datetime import datetime
-from imgurpython import ImgurClient
-from github import Github
-from flask import Flask, render_template, session, redirect, url_for, escape, request
-app = Flask(__name__)
 
 
 print("********************************************")
@@ -275,7 +264,7 @@ def issueMapper(i):
 #################################################################
 #                    GITHUB - MAPPER    
 #################################################################
-def points(gRepo):
+def repoMapper(gRepo):
 
     global totalPoints
     global totalIssues
@@ -391,10 +380,10 @@ def lineChart(x,y,labelX="time",labelY="event",title=None):
     plt.grid(True)
     print("Line ploted")
     if uploadImage == True:
-        plt.savefig('simpleChart.png', bbox_inches='tight')
+        plt.savefig('images\simpleChart.png', bbox_inches='tight')
         plt.clf()
     else:
-        plt.savefig('pie_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+        plt.savefig('images\simpleChart_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
     print("Line saved")
 
 #################################################################
@@ -425,10 +414,10 @@ def pieChart(pie):
     plt.axis('equal')
     print("Pie ploted")
     if uploadImage == True:
-        plt.savefig('pie.png', bbox_inches='tight')
-        plt.clf()
+        plt.savefig("images\pie.png", bbox_inches='tight')
     else:
-        plt.savefig('pie_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+        plt.savefig("images\pie_" + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+    plt.clf()
     print("Pie saved")
 
 
@@ -446,8 +435,10 @@ def barChart(barA, barB, legendA="A", legendB="B" ,yLable='Scores'):
     print(barB)
     try:
         labelsX = barA.keys()
+        N = len(barA.keys())
     except:
         labelsX = [k for k, v in barA]
+        N = len(barA)
         
     print(labelsX)
     try:
@@ -456,11 +447,11 @@ def barChart(barA, barB, legendA="A", legendB="B" ,yLable='Scores'):
         meansA = [v for k, v in barA]
     print(meansA)
     
-    N = len(barA.keys())
+    
     try:
         meansB = barB.values()
     except:
-        meansB = [v for k, v in barA]
+        meansB = [v for k, v in barB]
     print(meansB)
 
     ind = np.arange(N)  # the x locations for the groups
@@ -487,12 +478,16 @@ def barChart(barA, barB, legendA="A", legendB="B" ,yLable='Scores'):
     autolabel(rects1)
     autolabel(rects2)
     print("Bar ploted")
-    if uploadImage == True:
-        plt.savefig('bar.png', bbox_inches='tight')
-        plt.clf()
-    else:
-        plt.savefig('bar_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
-    print("Bar saved")
+    try:
+        if uploadImage == True:
+            plt.savefig("bar.png", bbox_inches='tight')
+        else:
+            plt.savefig("bar_" + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+        print("Bar saved")
+    except:
+        plt.savefig("asdadsdasdasd.png", bbox_inches='tight' )
+        plt.show()
+
 
 #################################################################
 #                        CHARTS    
@@ -574,7 +569,7 @@ def generateCharts():
     for pie in pieCharts:
         pieChart(sorted(pie.items(), key=operator.itemgetter(0)))
         if uploadImage == True:
-            image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\foo.png', anon=False)
+            image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\images\\foo.png', anon=False)
             link_img = image['link']
             print("Pie uploaded")
             print(link_img)
@@ -589,7 +584,7 @@ def generateCharts():
         barB = sorted(value[1].items(), key=operator.itemgetter(0))
         barChart(barA, barB, "Tarefas", "Pontos")
         if uploadImage == True:
-            image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\bar.png', anon=False)
+            image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\images\\bar.png', anon=False)
             link_img = image['link']
             print("Bar uploaded")
             print(link_img)
@@ -614,21 +609,25 @@ def generateCharts():
                 print(eat['event'])
                 try:
                     status = eat['detail']['status']
-                          
+                    print("Over here")      
                     if (status.rfind("-") != -1):
                         print("Status :" + str(status))
                         if int(eat['detail']['status'].split(" - ")[0]) >= 0:
                             
                             eventStatus.append(int(status.split(" - ")[0]))
-                            date_string = str(eat['created_at'])
-                            print("Date " + str(date_string))
-                            try:
-                                int_time = int(time.mktime(datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S").timetuple()))
-                                print("int_time: " + str(int_time))
-                                time.append(str(int_time))
-                            except:
-                                time.append(str(date_string))
-                            print("here")
+                            
+                    else:
+                        eventStatus.append(status)
+
+                    date_string = str(eat['created_at'])
+                    print("Date " + str(date_string))
+                    try:
+                        int_time = int(time.mktime(datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S").timetuple()))
+                        print("int_time: " + str(int_time))
+                        time.append(str(int_time))
+                    except:
+                        time.append(str(date_string))
+                    print("here")
                         
                 except:
                     print("Error map events to charts")
@@ -648,12 +647,12 @@ def generateCharts():
             print(str(len(eventGraphsURLs)))
         try:
             if len(time) > 0 and len(eventStatus) > 0:
-                print(time)
+                print(time[0])
                 print(len(eventStatus))
                 lineChart(time, eventStatus)
                 print("Ploted")
             if uploadImage == True:
-                image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\simpleChart.png', anon=False)
+                image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\images\\simpleChart.png', anon=False)
                 print(image)
                 link_img = image['link']
                 print("Line uploaded")
@@ -673,6 +672,8 @@ def generateCharts():
 def startMetrics():
 
     global gRepo
+    global events
+    
     i=0
     print("Colaboradores do repositorio:")
     for x in gRepo.get_collaborators():
@@ -685,7 +686,12 @@ def startMetrics():
     startTimeMetrics = datetime.now()
     print("TimeMetrics")
     print(startTimeMetrics)
-    points(gRepo)
+    try:
+        repoMapper(gRepo)
+        eventsColl.insert_one(post)
+        print("Colleção adicionada")
+    except:
+        print("Erro ao adicionar os eventos")
     print(datetime.now() - startTimeMetrics)
     print("\n")
 
@@ -750,7 +756,7 @@ def renderDashboard(org, repo):
     issuesIndicators.append(totalPullRequest)
     issuesIndicators.append(totalPoints)
     issuesIndicators.append(totalIssuesWithPoints)
-    issuesIndicators.append(totalIssuesWithPoints)
+    issuesIndicators.append(totalIssuesWithoutPoints)
 
     print("Events graphs")
     print(eventGraphsURLs)

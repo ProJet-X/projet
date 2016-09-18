@@ -1,8 +1,3 @@
-import numpy as np
-import operator
-import time
-from datetime import datetime
-from github import Github
 
 class ProGet(object):
     """docstring for ProGet"""
