@@ -1,3 +1,17 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import operator
+import time
+import json
+import matplotlib.dates as mdates
+import pymongo
+from timeEstimator import Estimator
+from pymongo import MongoClient
+from datetime import datetime
+from imgurpython import ImgurClient
+from github import Github
+from flask import Flask, render_template, session, redirect, url_for, escape, request
+app = Flask(__name__)
 
 
 print("********************************************")
@@ -5,7 +19,6 @@ print("Welcome to ProJet analytics dashboard trace")
 print("ProJet v0.0.4")
 print("********************************************")
 print("\n")
-
 
 ################################################################# 
 #                        VARIABLES 
@@ -48,23 +61,44 @@ sprintsIssuesDevs = {}
 ## Represents the number of issues per dev in which status
 statusIssuesDevs = {}
 
-## Events of each issue
-eventActorTime = []
 ## General events
 events = []
 
 ################################################################# 
 #                    DataBase Mongo 
 #################################################################
-clientMongo = MongoClient()
-## Could be
-# client = MongoClient('mongodb://localhost:27017/')
 
-db = clientMongo.test_database
+print("MongoDB configs")
+try:
+    clientMongo = MongoClient()
+    print(clientMongo)
+    ## Could be
+    # client = MongoClient('mongodb://localhost:27017/')
 
-eventsColl = db.events
+    db = clientMongo.test_database
+    print(db)
 
+    usersColl = db.users
+    issuesColl = db.issues
+    #eventsColl = db.events
+    print(usersColl)
 
+    try:
+        result = usersColl.create_index([('user_id', pymongo.ASCENDING)], unique=True)
+        print(str(result))
+    except:
+        pass
+    
+    try:
+        result = issuesColl.create_index([('repo_name', pymongo.TEXT)], unique=True)
+        print(str(result))
+    except:
+        pass
+    print(usersColl.index_information())
+    print("Finished mongoDB configs")
+except:
+    print("MongoDB config ERROR!")
+    
 ################################################################# 
 #                    GITHUB - MAPPER 
 #################################################################           
@@ -256,16 +290,17 @@ def issueMapper(i):
             ## Events with actor and time
             eventActorTime.append({'event':e.event,'actor':actor,'created_at': str(e.created_at), 'detail':detail.copy()})
             #print("EAT " + str(eventActorTime))
-    events.append(eventActorTime.copy())
-    print("Appending events")
+    issueEvent = {str(i.number):eventActorTime.copy()}
+    events.append(issueEvent.copy())
+    print("Appending issue #" + str(i.number) + "events")
     print(str(len(events)))
     print("\n")
 
 #################################################################
-#                    GITHUB - MAPPER    
+#                    GITHUB - Logger    
 #################################################################
-def repoMapper(gRepo):
 
+def printLog() :
     global totalPoints
     global totalIssues
     global totalPullRequest
@@ -282,6 +317,43 @@ def repoMapper(gRepo):
     global statusIssues
     global statusIssuesDevs
     
+    print("Pontos totais: " + str(totalPoints))
+    for sP in sprintsPoints:
+        print("Pontos totais do sprint " + str(sP) + ": " + str(sprintsPoints[sP]))
+    for aP in assigneesPoints:
+        print("Pontos totais do colaborador: " + str(aP) + ": " + str(assigneesPoints[aP]))
+    for sDP in sprintsPointsDevs:
+        print("Pontos do colaborador no sprint: " + str(sDP) + ": " + str(sprintsPointsDevs[sDP]))
+    for stP in statusPoints:
+        print("Pontos por status: " + str(stP) + ": " + str(statusPoints[stP]))
+    for stPD in statusPointsDevs:
+        print("Pontos do colaborador no status: " + str(stPD) + ": " + str(statusPointsDevs[stPD]))
+    print("\n")
+
+    print("Numero de tarefas totais: " + str(totalIssues))
+    print("Numero de tarefas como Pull Request: " + str(totalPullRequest))
+    for sI in sprintsIssues:
+        print("Numero de tarefas totais do sprint " + str(sI) + ": " + str(sprintsIssues[sI]))
+    for aI in assigneesIssues:
+        print("Numero de tarefas totais do colaborador: " + str(aI) + ": " + str(assigneesIssues[aI]))
+    for sID in sprintsIssuesDevs:
+        print("Numero de tarefas do colaborador no sprint: " + str(sID) + ": " + str(sprintsIssuesDevs[sID]))
+    for stI in statusIssues:
+        print("Numero de tarefas por status: " + str(stI) + ": " + str(statusIssues[stI]))
+    for stID in statusIssuesDevs:
+        print("Numero de tarefas do colaborador no status: " + str(stID) + ": " + str(statusIssuesDevs[stID]))
+    print("Quantidade de issues com eventos: " + str(len(events)))
+    print("\n")
+    Estimator.estimate()
+    print("\n")
+
+
+
+#################################################################
+#                    GITHUB - MAPPER    
+#################################################################
+def repoMapper(gRepo):
+    
     try:
         issueId = ""
         if issueId == "":
@@ -297,35 +369,10 @@ def repoMapper(gRepo):
                 except:
                     print("Last issue")
                     lookup = False
-                
-            print("Pontos totais: " + str(totalPoints))
-            for sP in sprintsPoints:
-                print("Pontos totais do sprint " + str(sP) + ": " + str(sprintsPoints[sP]))
-            for aP in assigneesPoints:
-                print("Pontos totais do colaborador: " + str(aP) + ": " + str(assigneesPoints[aP]))
-            for sDP in sprintsPointsDevs:
-                print("Pontos do colaborador no sprint: " + str(sDP) + ": " + str(sprintsPointsDevs[sDP]))
-            for stP in statusPoints:
-                print("Pontos por status: " + str(stP) + ": " + str(statusPoints[stP]))
-            for stPD in statusPointsDevs:
-                print("Pontos do colaborador no status: " + str(stPD) + ": " + str(statusPointsDevs[stPD]))
-            print("\n")
-            
-            print("Numero de tarefas totais: " + str(totalIssues))
-            print("Numero de tarefas como Pull Request: " + str(totalPullRequest))
-            for sI in sprintsIssues:
-                print("Numero de tarefas totais do sprint " + str(sI) + ": " + str(sprintsIssues[sI]))
-            for aI in assigneesIssues:
-                print("Numero de tarefas totais do colaborador: " + str(aI) + ": " + str(assigneesIssues[aI]))
-            for sID in sprintsIssuesDevs:
-                print("Numero de tarefas do colaborador no sprint: " + str(sID) + ": " + str(sprintsIssuesDevs[sID]))
-            for stI in statusIssues:
-                print("Numero de tarefas por status: " + str(stI) + ": " + str(statusIssues[stI]))
-            for stID in statusIssuesDevs:
-                print("Numero de tarefas do colaborador no status: " + str(stID) + ": " + str(statusIssuesDevs[stID]))
         else:
             issue = gRepo.get_issue(issueId)
             issueMapper(issue)
+        printLog()
     except:
         print("Issue não existe")
         
@@ -381,9 +428,9 @@ def lineChart(x,y,labelX="time",labelY="event",title=None):
     print("Line ploted")
     if uploadImage == True:
         plt.savefig('images\simpleChart.png', bbox_inches='tight')
-        plt.clf()
     else:
         plt.savefig('images\simpleChart_' + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
+    plt.clf()
     print("Line saved")
 
 #################################################################
@@ -409,7 +456,7 @@ def pieChart(pie):
         fracs = [v / total for v in [v for k, v in pie]]
 
     print(fracs)
-    
+    plt.clf()
     plt.pie(fracs ,labels=labels, autopct='%1.1f%%', shadow=False, startangle=70)
     plt.axis('equal')
     print("Pie ploted")
@@ -417,7 +464,6 @@ def pieChart(pie):
         plt.savefig("images\pie.png", bbox_inches='tight')
     else:
         plt.savefig("images\pie_" + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
-    plt.clf()
     print("Pie saved")
 
 
@@ -482,11 +528,10 @@ def barChart(barA, barB, legendA="A", legendB="B" ,yLable='Scores'):
         if uploadImage == True:
             plt.savefig("bar.png", bbox_inches='tight')
         else:
-            plt.savefig("bar_" + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
-        print("Bar saved")
+            plt.savefig("images\bar_" + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight')
     except:
-        plt.savefig("asdadsdasdasd.png", bbox_inches='tight' )
-        plt.show()
+        plt.savefig("barTest_" + str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S_%f")), bbox_inches='tight' )
+    print("Bar saved")
 
 
 #################################################################
@@ -548,7 +593,6 @@ def generateCharts():
     global sprintsPointsDevs
     global statusPointsDevs
 
-    global eventActorTime
     global events
     
     global graphsURLs
@@ -602,66 +646,70 @@ def generateCharts():
     time = []
     eventStatus = []
     eventTag = []
-    print("eventActorTime" + str(eventActorTime) + "\n" + str(len(events)))
-    for eAT in events:
-        for eat in eAT:
-            if eat['event'] == "labeled" or eat['event'] == "unlabeled":
-                print(eat['event'])
-                try:
-                    status = eat['detail']['status']
-                    print("Over here")      
-                    if (status.rfind("-") != -1):
-                        print("Status :" + str(status))
-                        if int(eat['detail']['status'].split(" - ")[0]) >= 0:
-                            
-                            eventStatus.append(int(status.split(" - ")[0]))
-                            
-                    else:
-                        eventStatus.append(status)
-
-                    date_string = str(eat['created_at'])
-                    print("Date " + str(date_string))
+    print("events " + str(len(events)))
+    for issueEvent in events:
+        for eventID, eventData in issueEvent:
+            for eD in eventData:
+                print(eventID)
+                print(eventData)
+                if eventData['event'] == "labeled" or eventData['event'] == "unlabeled":
+                    print(eventData['event'])
                     try:
-                        int_time = int(time.mktime(datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S").timetuple()))
-                        print("int_time: " + str(int_time))
-                        time.append(str(int_time))
+                        print("Over here")      
+                        if (eventData['detail']['status'].rfind("-") != -1):
+                            print("Status :" + str(status))
+                            if int(eventData['detail']['status'].split(" - ")[0]) >= 0:
+                                
+                                eventStatus.append(int(status.split(" - ")[0]))
+                                
+                        else:
+                            eventStatus.append(status)
+
+                        date_string = str(eventData['created_at'])
+                        print("Date " + str(date_string))
+                        try:
+                            int_time = int(time.mktime(datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S").timetuple()))
+                            print("int_time: " + str(int_time))
+                            time.append(str(int_time))
+                        except:
+                            time.append(str(date_string))
+                        print("here")
+                            
                     except:
-                        time.append(str(date_string))
-                    print("here")
+                        print("Error map events to charts")
+                        #eventTag.append(eventData)
+                        #time.append(str(eventData['created_at']))
                         
-                except:
-                    print("Error map events to charts")
-                    #eventTag.append(eat)
-                    #time.append(str(eat['created_at']))
+                else:
+                    print("!!!!!!")
                     
-            else:
-                print("!!!!!!")
+                print("Time:")
+                print(str(len(time)))
+                print("EventStatus")
+                print(str(len(eventStatus)))
+                print("EventTag")
+                print(str(len(eventTag)))
+                print("EventGraphsURLs")
+                print(str(len(eventGraphsURLs)))
+            try:
+                if len(time) > 0 and len(eventStatus) > 0:
+                    print(time[0])
+                    print(len(eventStatus))
+                    lineChart(time, eventStatus)
+                    print("Ploted")
+                if uploadImage == True:
+                    image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\images\\simpleChart.png', anon=False)
+                    print(image)
+                    link_img = image['link']
+                    print("Line uploaded")
+                    print(link_img)
+                    eventGraphsURLs.append(link_img)
+                    print("Line appended")
+                    
+            except:
+                print("Simple chart error")
+
                 
-            print("Time:")
-            print(str(len(time)))
-            print("EventStatus")
-            print(str(len(eventStatus)))
-            print("EventTag")
-            print(str(len(eventTag)))
-            print("EventGraphsURLs")
-            print(str(len(eventGraphsURLs)))
-        try:
-            if len(time) > 0 and len(eventStatus) > 0:
-                print(time[0])
-                print(len(eventStatus))
-                lineChart(time, eventStatus)
-                print("Ploted")
-            if uploadImage == True:
-                image = client.upload_from_path('C:\\Users\\vinic\\Projects\\projet\\images\\simpleChart.png', anon=False)
-                print(image)
-                link_img = image['link']
-                print("Line uploaded")
-                print(link_img)
-                eventGraphsURLs.append(link_img)
-                print("Line appended")
-                
-        except:
-            print("Simple chart error")
     print("Final graficos")
     print(datetime.now() - startTimeGraphs)
     
@@ -672,6 +720,28 @@ def generateCharts():
 def startMetrics():
 
     global gRepo
+
+    global totalPoints
+    global totalIssues
+    global totalPullRequest
+    global totalIssuesWithPoints
+    global totalIssuesWithoutPoints
+    
+    global sprintsPoints
+    global sprintsIssues
+    
+    global assigneesPoints
+    global assigneesIssues
+    
+    global statusPoints
+    global statusIssues
+
+    global sprintsPointsDevs
+    global sprintsIssuesDevs
+    
+    global statusPointsDevs
+    global statusIssuesDevs
+
     global events
     
     i=0
@@ -682,16 +752,73 @@ def startMetrics():
     for x in gRepo.get_assignees():
         print(x.login)
     print("\n")
-
+               
     startTimeMetrics = datetime.now()
     print("TimeMetrics")
     print(startTimeMetrics)
-    try:
-        repoMapper(gRepo)
-        eventsColl.insert_one(post)
-        print("Colleção adicionada")
-    except:
-        print("Erro ao adicionar os eventos")
+    print("\n")
+    if issuesColl.find({"repo_name": str(gRepo.name)}).count() == 1:
+        print("Existe repo mapeado: ")
+        
+        issuesData = issuesColl.find_one({"repo_name": gRepo.name})
+        
+        totalPoints = issuesData.get('total_points')
+        totalIssues = issuesData.get('total_issues')
+        totalPullRequest = issuesData.get('total_pull_request')
+        totalIssuesWithPoints = issuesData.get('total_issues_with_points')
+        totalIssuesWithoutPoints = issuesData.get('total_issues_without_points')
+        
+        sprintsPoints = issuesData.get('sprints_points')
+        sprintsIssues = issuesData.get('sprints_issues')
+        
+        statusPoints = issuesData.get('status_points')
+        statusIssues = issuesData.get('status_issues')
+
+        assigneesPoints = issuesData.get('assignees_points')
+        assigneesIssues = issuesData.get('assignees_issues')
+
+        sprintsPointsDevs = issuesData.get('sprints_points_devs')
+        sprintsIssuesDevs = issuesData.get('sprints_issues_devs')
+
+        statusPointsDevs = issuesData.get('status_points_devs')
+        statusIssuesDevs = issuesData.get('status_issues_devs')
+
+        events = issuesData.get('events')
+        print("Last updated: " + str(issuesData.get('last_update')))
+        
+    else:
+        print("Iniciando mapeamendo do repo: " + str(gRepo.name))
+        try:
+            repoMapper(gRepo)
+            print("Repo mapeado")
+            issueMapped = {'repo_name':gRepo.name,
+                     'total_points':totalPoints,
+                     'total_issues':totalIssues,
+                     'total_pull_request':totalPullRequest,
+                     'total_issues_with_points':totalIssuesWithPoints,
+                     'total_issues_without_points':totalIssuesWithoutPoints,
+                     'sprints_points':sprintsPoints,
+                     'sprints_issues':sprintsIssues,
+                     'status_points':statusPoints,
+                     'status_issues':statusIssues,
+                     'assignees_points':assigneesPoints,
+                     'assignees_issues':assigneesIssues,
+                     'sprints_points_devs':sprintsPointsDevs,
+                     'sprints_issues_devs':sprintsIssuesDevs,
+                     'status_points_devs':statusPointsDevs,
+                     'status_issues_devs':statusIssuesDevs,
+                     'events':events,
+                     'last_update':str(startTimeMetrics)}
+            print(issueMapped.keys())
+            issue_id = issuesColl.insert_one(issueMapped).inserted_id
+            print("Colleção adicionada: " + str(issue_id))
+            # http://stackoverflow.com/questions/15415709/update-json-file
+            # http://stackoverflow.com/questions/13949637/how-to-update-json-file-with-python
+            # https://docs.python.org/2/tutorial/inputoutput.html
+            #with open('issueMappedDumpJSON.txt', 'w') as outfile:
+            #    json.dump(issueMapped, outfile)
+        except:
+            print("Erro ao adicionar os dados ao banco de dados")
     print(datetime.now() - startTimeMetrics)
     print("\n")
 
@@ -829,6 +956,7 @@ def dashboard():
                 try:
                     print("\n")
                     startMetrics()
+                    printLog()
                     print("Metrics-->Charts")
                     generateCharts()
                 except:
@@ -839,6 +967,16 @@ def dashboard():
         return renderDashboard(org, repo)
     else:
         return redirect(url_for('index'))
+            
+#################################################################
+#                      FLASK - WEB PLATFORM
+#################################################################
+
+@app.route('/test')
+def test():
+    return render_template('index.html')
+        
+
         
 #################################################################
 #                      FLASK - WEB PLATFORM
@@ -849,6 +987,10 @@ def index():
     if auth():
         return redirect(url_for('dashboard'))
     return render_template('unauthorized.html')
+        
+#################################################################
+#                      FLASK - WEB PLATFORM
+#################################################################
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -861,7 +1003,9 @@ def login():
             login = Github(request.form['username'],request.form['password']).get_user().login
             session['username'] = login
             session['password'] = request.form['password']
-        
+            user = {'username':login,'last_login':startTimePostLogin}
+            user_id = usersColl.insert_one(user).inserted_id
+            print("Usuário adicionado: " + str(user_id))
         except:
             print("Fail!")
             print(datetime.now() - startTimePostLogin)
