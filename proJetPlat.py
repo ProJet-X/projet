@@ -67,38 +67,38 @@ events = []
 ################################################################# 
 #                    DataBase Mongo 
 #################################################################
-
-print("MongoDB configs")
-try:
-    clientMongo = MongoClient()
-    print(clientMongo)
-    ## Could be
-    # client = MongoClient('mongodb://localhost:27017/')
-
-    db = clientMongo.test_database
-    print(db)
-
-    usersColl = db.users
-    issuesColl = db.issues
-    #eventsColl = db.events
-    print(usersColl)
-
+def connectMongo():
+    print("MongoDB configs")
     try:
-        result = usersColl.create_index([('user_id', pymongo.ASCENDING)], unique=True)
-        print(str(result))
+        clientMongo = MongoClient()
+        print(clientMongo)
+        ## Could be
+        # client = MongoClient('mongodb://localhost:27017/')
+
+        db = clientMongo.test_database
+        print(db)
+
+        usersColl = db.users
+        issuesColl = db.issues
+        #eventsColl = db.events
+        print(usersColl)
+
+        try:
+            result = usersColl.create_index([('user_id', pymongo.ASCENDING)], unique=True)
+            print(str(result))
+        except:
+            pass
+        
+        try:
+            result = issuesColl.create_index([('repo_name', pymongo.TEXT)], unique=True)
+            print(str(result))
+        except:
+            pass
+        print(usersColl.index_information())
+        print("Finished mongoDB configs")
     except:
-        pass
-    
-    try:
-        result = issuesColl.create_index([('repo_name', pymongo.TEXT)], unique=True)
-        print(str(result))
-    except:
-        pass
-    print(usersColl.index_information())
-    print("Finished mongoDB configs")
-except:
-    print("MongoDB config ERROR!")
-    
+        print("MongoDB config ERROR!")
+connectMongo()
 ################################################################# 
 #                    GITHUB - MAPPER 
 #################################################################           
@@ -904,15 +904,29 @@ def renderDashboard(org, repo):
     created_at=4
     working=5
     done=6
-  
-    orgs=['a',"b","c","d"]
+
+    data = [
+    { 'y': '2006', 'a': 100, 'b': 90 },
+    { 'y': '2007', 'a': 75,  'b': 65 },
+    { 'y': '2008', 'a': 50,  'b': 40 },
+    { 'y': '2009', 'a': 75,  'b': 65 },
+    { 'y': '2010', 'a': 50,  'b': 40 },
+    { 'y': '2011', 'a': 75,  'b': 65 },
+    { 'y': '2012', 'a': 100, 'b': 90 }
+  ]
+    xkey = 'y'
+    ykeys = ['a', 'b'],
+    orgs = ["AAa","BBb","cCC","dDD"]
+    labels = ['Series AAA', 'Series BBB']
+    
     print(orgs, issuesIndicators, org, repo, a, b,charts)
     return render_template('dashboard.html', render=True, orgs=orgs,
                            issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
                            charts=charts,
                            devs=devs,taskId=taskId,taskPoints=taskPoints,
-                           created_at=created_at,working=working,done=done)
+                           created_at=created_at,working=working,done=done,
+                           data=data,xkey=xkey,ykeys=ykeys,labels=labels)
 
 #################################################################
 #                       PROJET WEB PLAT AUTH
@@ -933,7 +947,7 @@ def auth():
 def dashboard():
 
     global gRepo
-    
+    connectMongo()
     org = ""
     repo = ""
     issueId = ""
@@ -972,10 +986,20 @@ def dashboard():
 #                      FLASK - WEB PLATFORM
 #################################################################
 
+@app.route('/timesheet')
+def timesheet():
+    return render_template('timesheet.html')
+        
+            
+#################################################################
+#                      FLASK - WEB PLATFORM
+#################################################################
+
 @app.route('/test')
 def test():
-    return render_template('index.html')
+    return render_template('404.html')
         
+
 
         
 #################################################################
@@ -992,7 +1016,7 @@ def index():
 #                      FLASK - WEB PLATFORM
 #################################################################
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/auth', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
     
@@ -1012,7 +1036,7 @@ def login():
             return redirect(url_for('index'))
         print(datetime.now() - startTimePostLogin)
         return redirect(url_for('index'))
-    return render_template('login.html')
+    return render_template('auth.html')
 
 #################################################################
 #                      FLASK - WEB PLATFORM

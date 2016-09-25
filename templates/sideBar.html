@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- get the required files from 3rd party sources -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+
+/*RESPONSIVE MENU*/
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  z-index:2;
+}
+
+ul.sidenav {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 15%;
+    background-color: #333;
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+    top:46px;
+    z-index:2;
+}
+
+ul.sidenav li a {
+    display: block;
+    color: #f1f1f1  ;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+ 
+ul.sidenav li a.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+ul.sidenav li a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+}
+
+div.content {
+    margin-left: 15%;
+    padding: 60px 1px 16px 16px;
+    height: 1000px;
+}
+
+@media screen and (max-width: 1050px){
+    ul.sidenav {
+        width:100%;
+        height:auto;
+        position:relative;
+    }
+    ul.sidenav li a {
+        float: left;
+        padding: 15px;
+    }
+    div.content {
+      margin-left:0;
+    }
+}
+
+@media screen and (max-width: 400px){
+    ul.sidenav li a {
+        text-align: center;
+        float: none;
+    }
+}
+
+</head>
+<body>
+
+<ul class="sidenav">
+  <li><a class="active" href="#news">Dashboard</a></li>
+  <li><a href="/timesheet">TimeSheet</a></li>
+  <li><a href="#about">About ProJet</a></li>
+</ul>
+
+<div class="content">
+</div>
+</body>
+</html>

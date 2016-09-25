@@ -1,11 +1,156 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- get the required files from 3rd party sources -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
+/*FIX TOP MENU*/
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  z-index:2;
+  background-color: #333;
+}
+
+ul.fixedOnTop {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  z-index:1;
+}
+
+li {
+  float: left;
+}
+
+li a, .dropbtn {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  
+}
+
+li a:hover, .dropdown:hover .dropbtn {
+    background-color: red;
+    
+}
+
+li.dropdown {
+    display: inline-block;
+    float: right;
+    margin-right: 15dp;
+    
+}
+
+.dropdown-content {
+    display: none;
+    position: fixed;
+    background-color: #f9f9f9;
+    left:auto;
+    right:0;
+    margin-right:-10px;
+    min-width: 100px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    
+}
+
+.dropdown-content a:hover {background-color: #f1f1f1}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+    z-index:1;
+}
+
+/*RESPONSIVE MENU*/
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  z-index:2;
+}
+
+ul.sidenav {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 10%;
+    background-color: #333;
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+    top:46px;
+    z-index:2;
+}
+
+ul.sidenav li a {
+    display: block;
+    color: #f1f1f1  ;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+ 
+ul.sidenav li a.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+ul.sidenav li a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+}
+
+div.content {
+    margin-left: 10%;
+    padding: 60px 1px 16px 16px;
+    height: 1000px;
+}
+
+@media screen and (max-width: 1050px){
+    ul.sidenav {
+        width:100%;
+        height:auto;
+        position:fixed;
+        top:46px;
+        left:0;
+        width:100%;
+      
+    }
+    ul.sidenav li a {
+        float: left;
+        padding: 15px;
+    }
+    div.content {
+      margin-left:0;
+      padding: 96px 0px 0px 0px;
+    }
+}
+@media screen and (max-width: 400px){
+    ul.sidenav li a {
+        text-align: center;
+        float: none;
+    }
+}
+/*  OTHERS  */
 img { 
 
     width:80%; 
@@ -21,11 +166,18 @@ table, th, td {
 
 </style>
 <script type="text/javascript">
+
+var dataBarChart = JSON.parse('{{data|tojson|safe}}');
+var xkeyBarChart = '{{xkey}}';
+var ykeysBarChart = JSON.parse('{{ykeys|tojson|safe}}');
+var labelsBarChart = JSON.parse('{{labels|tojson|safe}}');
+var yKeysSplit = ykeysBarChart.split(",")
+
 window.onload = function setOrgs() {
   var myDivOrgs = document.getElementById("myDivOrgs");
 
   //Create array of options to be added
-  var array = "{{orgs | safe }}";
+  var array = JSON.parse("{{orgs | safe }}");
 
   //Create and append select list
   var selectList = document.createElement("select");
@@ -45,6 +197,26 @@ window.onload = function setOrgs() {
 </head>
 <body>
 <title>ProJet Dashboard</title>
+
+<ul class="fixedOnTop">
+  <li><a class="active" href="/">ProJet</a></li>
+  
+  <li align="right"  class="dropdown">
+    <a href="#" class="dropbtn">Conta</a>
+    <div class="dropdown-content">
+      <a href="/auth">Login com outra conta</a>
+      <a href="/logout" target="_top">LogOut</a>
+    </div>
+  </li>
+</ul>
+
+<ul class="sidenav">
+  <li><a class="active" href="/dashboard">Dashboard</a></li>
+  <li><a href="/timesheet">TimeSheet</a></li>
+  <li><a href="#" onclick="alert(xkeyBarChart + '\n' + ykeysBarChart + '\n' + yKeysSplit
+   + '\n' + labelsBarChart + '\n' + dataBarChart)">About ProJet</a></li>
+</ul>
+<div class="content">
 <form action="" method="post">
   <fieldset>
     <legend>ProJet</legend>
@@ -56,7 +228,6 @@ window.onload = function setOrgs() {
     <br><br>
     <input type="submit" value="Projet"><br>
     <br>
-    <a href="/logout" target="_top" align="right" >LOGOUT</a>
     <div id="myDivOrgs" align="middle">Orgs</div>
     <div id="myDivRepos" align="right">Repos {{orgs}}</div>
   </fieldset>
@@ -84,6 +255,9 @@ window.onload = function setOrgs() {
   </table>
   <h2>Gráficos</h2>
   <div id="myfirstchart" style="height: 250px;"></div>
+  <div id="bar-example"></div>
+  <div id="donut-example"></div>
+  <div id="area-example"></div>
   <img src={{ charts[0] }} alt="ChartA" align="middle">
   <p>{{ a }}</p>
   <img src={{ charts[1] }} alt="ChartB" align="middle">
@@ -121,7 +295,9 @@ window.onload = function setOrgs() {
   <p>Please <a href="/login" target="_top">try again</a></p>
   <p>If persists, try <a href="/logout" target="_top">later</a></p>
 {% endif %}
+</div>
 <script type="text/javascript">
+
 new Morris.Line({
   // ID of the element in which to draw the chart.
   element: 'myfirstchart',
@@ -140,8 +316,68 @@ new Morris.Line({
   ykeys: ['value'],
   // Labels for the ykeys -- will be displayed when you hover over the
   // chart.
-  labels: ['Value']
+  labels:
+   ['Value']
 });
+
+/*
+ * Play with this code and it'll update in the panel opposite.
+ *
+ * Why not try some of the options above?
+ */
+Morris.Area({
+  element: 'area-example',
+  
+  data: [
+    { y: '2006', a: 100, b: 90 },
+    { y: '2007', a: 75,  b: 65 },
+    { y: '2008', a: 50,  b: 40 },
+    { y: '2009', a: 75,  b: 65 },
+    { y: '2010', a: 50,  b: 40 },
+    { y: '2011', a: 75,  b: 65 },
+    { y: '2012', a: 100, b: 90 }
+  ],
+  xkey: 'y',
+  ykeys: ['a', 'b'],
+  labels: ['Series A', 'Series B']
+
+});
+
+/*
+ * Play with this code and it'll update in the panel opposite.
+ *
+ * Why not try some of the options above?
+ */
+Morris.Bar({
+  element: 'bar-example',
+  data: [
+    { y: '2006', a: 100, b: 90 },
+    { y: '2007', a: 75,  b: 65 },
+    { y: '2008', a: 50,  b: 40 },
+    { y: '2009', a: 75,  b: 65 },
+    { y: '2010', a: 50,  b: 40 },
+    { y: '2011', a: 75,  b: 65 },
+    { y: '2012', a: 100, b: 90 }
+  ],
+  xkey: xkeyBarChart,
+  ykeys: ['a', 'b'],
+  labels: ['Series A', 'Series B']
+});
+
+/*
+ * Play with this code and it'll update in the panel opposite.
+ *
+ * Why not try some of the options above?
+ */
+Morris.Donut({
+  element: 'donut-example',
+  data: [
+    {label: "Download Sales", value: 12},
+    {label: "In-Store Sales", value: 30},
+    {label: "Mail-Order Sales", value: 20}
+  ]
+});
+
 </script>
 </body>
 </html>
