@@ -42,7 +42,7 @@ li a, .dropbtn {
 }
 
 li a:hover, .dropdown:hover .dropbtn {
-    background-color: red;
+    background-color: #23a988;
     
 }
 
@@ -110,13 +110,16 @@ ul.sidenav li a {
 }
  
 ul.sidenav li a.active {
-    background-color: #4CAF50;
+    background-color: #1a7f75;
     color: white;
+    width:80%;
 }
 
 ul.sidenav li a:hover:not(.active) {
     background-color: #555;
     color: white;
+    width:80%;
+
 }
 
 div.content {
@@ -152,12 +155,7 @@ div.content {
 }
 /*  OTHERS  */
 img { 
-
     width:80%; 
-}
-
-a:hover {
-    background-color: orange;
 }
 
 table, th, td {
@@ -171,7 +169,7 @@ var dataBarChart = JSON.parse('{{data|tojson|safe}}');
 var xkeyBarChart = '{{xkey}}';
 var ykeysBarChart = JSON.parse('{{ykeys|tojson|safe}}');
 var labelsBarChart = JSON.parse('{{labels|tojson|safe}}');
-var yKeysSplit = ykeysBarChart.split(",")
+var yKeysSplit = ykeysBarChart
 
 window.onload = function setOrgs() {
   var myDivOrgs = document.getElementById("myDivOrgs");
@@ -253,6 +251,7 @@ window.onload = function setOrgs() {
   <td>  {{issuesIndicators[5]}} </td>
   </tr>
   </table>
+
   <h2>Gráficos</h2>
   <div id="myfirstchart" style="height: 250px;"></div>
   <div id="bar-example"></div>
@@ -350,15 +349,15 @@ Morris.Area({
  */
 Morris.Bar({
   element: 'bar-example',
-  data: [
-    { y: '2006', a: 100, b: 90 },
-    { y: '2007', a: 75,  b: 65 },
-    { y: '2008', a: 50,  b: 40 },
-    { y: '2009', a: 75,  b: 65 },
-    { y: '2010', a: 50,  b: 40 },
-    { y: '2011', a: 75,  b: 65 },
-    { y: '2012', a: 100, b: 90 }
-  ],
+  data: dataBarChart , //[
+  //   { y: '2006', a: 100, b: 90 },
+  //   { y: '2007', a: 75,  b: 65 },
+  //   { y: '2008', a: 50,  b: 40 },
+  //   { y: '2009', a: 75,  b: 65 },
+  //   { y: '2010', a: 50,  b: 40 },
+  //   { y: '2011', a: 75,  b: 65 },
+  //   { y: '2012', a: 100, b: 90 }
+  // ],
   xkey: xkeyBarChart,
   ykeys: ['a', 'b'],
   labels: ['Series A', 'Series B']
@@ -369,13 +368,17 @@ Morris.Bar({
  *
  * Why not try some of the options above?
  */
-Morris.Donut({
-  element: 'donut-example',
-  data: [
+
+  var dataDonutChart = JSON.parse('{{donutSprintsPointsChart|tojson|safe}}');
+  /*[
     {label: "Download Sales", value: 12},
     {label: "In-Store Sales", value: 30},
     {label: "Mail-Order Sales", value: 20}
-  ]
+  ];
+*/
+Morris.Donut({
+  element: 'donut-example',
+  data: dataDonutChart
 });
 
 </script>

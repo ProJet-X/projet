@@ -4,21 +4,26 @@ import operator
 import time
 import json
 import matplotlib.dates as mdates
-import pymongo
+from pyMongoDB import PyMongoDB 
 from timeEstimator import Estimator
-from pymongo import MongoClient
 from datetime import datetime
 from imgurpython import ImgurClient
 from github import Github
 from flask import Flask, render_template, session, redirect, url_for, escape, request
 app = Flask(__name__)
 
-
 print("********************************************")
 print("Welcome to ProJet analytics dashboard trace")
 print("ProJet v0.0.4")
+print(str(datetime.now()))
 print("********************************************")
 print("\n")
+
+################################################################# 
+#                    DataBase Mongo 
+#################################################################
+
+PyMongoDB.connectMongo()
 
 ################################################################# 
 #                        VARIABLES 
@@ -30,8 +35,9 @@ graphsURLs = []
 eventGraphsURLs = []
 
 # GitHub trace variables
-printEvents = True
+mapEvents = False
 uploadImage = False
+plotChartsLocally = False
 
 totalPoints = 0
 totalIssues = 0
@@ -64,41 +70,6 @@ statusIssuesDevs = {}
 ## General events
 events = []
 
-################################################################# 
-#                    DataBase Mongo 
-#################################################################
-def connectMongo():
-    print("MongoDB configs")
-    try:
-        clientMongo = MongoClient()
-        print(clientMongo)
-        ## Could be
-        # client = MongoClient('mongodb://localhost:27017/')
-
-        db = clientMongo.test_database
-        print(db)
-
-        usersColl = db.users
-        issuesColl = db.issues
-        #eventsColl = db.events
-        print(usersColl)
-
-        try:
-            result = usersColl.create_index([('user_id', pymongo.ASCENDING)], unique=True)
-            print(str(result))
-        except:
-            pass
-        
-        try:
-            result = issuesColl.create_index([('repo_name', pymongo.TEXT)], unique=True)
-            print(str(result))
-        except:
-            pass
-        print(usersColl.index_information())
-        print("Finished mongoDB configs")
-    except:
-        print("MongoDB config ERROR!")
-connectMongo()
 ################################################################# 
 #                    GITHUB - MAPPER 
 #################################################################           
@@ -255,9 +226,10 @@ def issueMapper(i):
         
     #### Events track
     print("Aberta em: " + str(i.created_at))
-    eventActorTime.clear()
-    eventActorTime.append({'event':'creation', 'created_at': str(i.created_at)})
-    if printEvents == True:
+   
+    if mapEvents == True:
+        eventActorTime.clear()
+        eventActorTime.append({'event':'creation', 'created_at': str(i.created_at)})
         for e in i.get_events():
             if e.event == "assigned" or e.event == "unassigned":
                 actor = e.raw_data.get("assigner").get("login")
@@ -290,10 +262,11 @@ def issueMapper(i):
             ## Events with actor and time
             eventActorTime.append({'event':e.event,'actor':actor,'created_at': str(e.created_at), 'detail':detail.copy()})
             #print("EAT " + str(eventActorTime))
-    issueEvent = {str(i.number):eventActorTime.copy()}
-    events.append(issueEvent.copy())
-    print("Appending issue #" + str(i.number) + "events")
-    print(str(len(events)))
+        issueEvent = {str(i.number):eventActorTime.copy()}
+        events.append(issueEvent.copy())
+        print("Appending issue #" + str(i.number) + "events")
+        print(str(len(events)))
+    print("Issue mapeada")
     print("\n")
 
 #################################################################
@@ -344,7 +317,8 @@ def printLog() :
         print("Numero de tarefas do colaborador no status: " + str(stID) + ": " + str(statusIssuesDevs[stID]))
     print("Quantidade de issues com eventos: " + str(len(events)))
     print("\n")
-    Estimator.estimate()
+    #####################
+    #Estimator.estimate()
     print("\n")
 
 
@@ -757,6 +731,7 @@ def startMetrics():
     print("TimeMetrics")
     print(startTimeMetrics)
     print("\n")
+    issuesColl = PyMongoDB.getIssuesColl()
     if issuesColl.find({"repo_name": str(gRepo.name)}).count() == 1:
         print("Existe repo mapeado: ")
         
@@ -907,26 +882,33 @@ def renderDashboard(org, repo):
 
     data = [
     { 'y': '2006', 'a': 100, 'b': 90 },
-    { 'y': '2007', 'a': 75,  'b': 65 },
-    { 'y': '2008', 'a': 50,  'b': 40 },
+    { 'y': '2007', 'a': 100,  'b': 65 },
+    { 'y': '2008', 'a': 75,  'b': 40 },
     { 'y': '2009', 'a': 75,  'b': 65 },
-    { 'y': '2010', 'a': 50,  'b': 40 },
+    { 'y': '2010', 'a': 75,  'b': 40 },
     { 'y': '2011', 'a': 75,  'b': 65 },
-    { 'y': '2012', 'a': 100, 'b': 90 }
+    { 'y': '2012', 'a': 300, 'b': 90 }
   ]
     xkey = 'y'
     ykeys = ['a', 'b'],
     orgs = ["AAa","BBb","cCC","dDD"]
     labels = ['Series AAA', 'Series BBB']
-    
-    print(orgs, issuesIndicators, org, repo, a, b,charts)
+
+    donutSprintsPointsChart = []
+    for dSPC in sorted(sprintsPoints.items(), key=operator.itemgetter(0)):
+        donutSprintsPointsChart.append({'label':dSPC[0],'value':dSPC[1]})
+
+    print("\n")
+    print("To render:")
+    print(orgs, issuesIndicators, org, repo, a, b,charts, donutSprintsPointsChart)
     return render_template('dashboard.html', render=True, orgs=orgs,
                            issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
                            charts=charts,
                            devs=devs,taskId=taskId,taskPoints=taskPoints,
                            created_at=created_at,working=working,done=done,
-                           data=data,xkey=xkey,ykeys=ykeys,labels=labels)
+                           data=data,xkey=xkey,ykeys=ykeys,labels=labels,
+                           donutSprintsPointsChart=donutSprintsPointsChart)
 
 #################################################################
 #                       PROJET WEB PLAT AUTH
@@ -947,7 +929,7 @@ def auth():
 def dashboard():
 
     global gRepo
-    connectMongo()
+    PyMongoDB.connectMongo()
     org = ""
     repo = ""
     issueId = ""
@@ -971,8 +953,10 @@ def dashboard():
                     print("\n")
                     startMetrics()
                     printLog()
-                    print("Metrics-->Charts")
-                    generateCharts()
+                    if plotChartsLocally:
+                        print("Metrics-->Charts")
+                        generateCharts()
+                    print("Metrics-->Render")
                 except:
                     print("Ocorreu um erro")
             except:
@@ -1028,6 +1012,7 @@ def login():
             session['username'] = login
             session['password'] = request.form['password']
             user = {'username':login,'last_login':startTimePostLogin}
+            usersColl = PyMongoDB.getUsersColl()
             user_id = usersColl.insert_one(user).inserted_id
             print("Usuário adicionado: " + str(user_id))
         except:
