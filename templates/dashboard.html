@@ -4,6 +4,8 @@
 <!-- get the required files from 3rd party sources -->
 <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
@@ -112,13 +114,13 @@ ul.sidenav li a {
 ul.sidenav li a.active {
     background-color: #1a7f75;
     color: white;
-    width:80%;
+    width:100%;
 }
 
 ul.sidenav li a:hover:not(.active) {
     background-color: #555;
     color: white;
-    width:80%;
+    width:100%;
 
 }
 
@@ -153,6 +155,9 @@ div.content {
         float: none;
     }
 }
+/*  CUSTOM  */
+
+
 /*  OTHERS  */
 img { 
     width:80%; 
@@ -165,13 +170,7 @@ table, th, td {
 </style>
 <script type="text/javascript">
 
-var dataBarChart = JSON.parse('{{data|tojson|safe}}');
-var xkeyBarChart = '{{xkey}}';
-var ykeysBarChart = JSON.parse('{{ykeys|tojson|safe}}');
-var labelsBarChart = JSON.parse('{{labels|tojson|safe}}');
-var yKeysSplit = ykeysBarChart
-
-window.onload = function setOrgs() {
+  window.onload = function setOrgs() {
   var myDivOrgs = document.getElementById("myDivOrgs");
 
   //Create array of options to be added
@@ -211,8 +210,7 @@ window.onload = function setOrgs() {
 <ul class="sidenav">
   <li><a class="active" href="/dashboard">Dashboard</a></li>
   <li><a href="/timesheet">TimeSheet</a></li>
-  <li><a href="#" onclick="alert(xkeyBarChart + '\n' + ykeysBarChart + '\n' + yKeysSplit
-   + '\n' + labelsBarChart + '\n' + dataBarChart)">About ProJet</a></li>
+  <li><a href="#" onclick="alert(labelsBarA + '\n' + labelsBarB + '\n' )">About ProJet</a></li>
 </ul>
 <div class="content">
 <form action="" method="post">
@@ -226,8 +224,8 @@ window.onload = function setOrgs() {
     <br><br>
     <input type="submit" value="Projet"><br>
     <br>
-    <div id="myDivOrgs" align="middle">Orgs</div>
-    <div id="myDivRepos" align="right">Repos {{orgs}}</div>
+    <!-- <div id="myDivOrgs" align="middle">Orgs</div>
+    <div id="myDivRepos" align="right">Repos {{orgs}}</div> -->
   </fieldset>
 </form>
 {% if render %}
@@ -251,13 +249,55 @@ window.onload = function setOrgs() {
   <td>  {{issuesIndicators[5]}} </td>
   </tr>
   </table>
+  
 
+ 
   <h2>Gráficos</h2>
-  <div id="myfirstchart" style="height: 250px;"></div>
-  <div id="bar-example"></div>
-  <div id="donut-example"></div>
-  <div id="area-example"></div>
-  <img src={{ charts[0] }} alt="ChartA" align="middle">
+  <div class="container">
+    <div class="row">
+        <div class="col-md-6">
+           <li align="middle">Pontos por sprint</li>
+           <div id="donut-points-sprints"></div>
+        </div>
+        <div class="col-md-6">
+          <li align="middle" >Issues por sprint</li>
+          <div id="donut-issues-sprints" ></div>
+        </div>
+    </div>
+  </div>
+
+  <br><br><br><br>
+
+  <div class="container">
+    <div class="row">
+        <div class="col-md-6">
+           <li align="middle">Pontos e Issues por dev</li>
+            <div id="bar-chart-assignees" ></div>
+        </div>
+        <div class="col-md-6">
+          <li align="middle" >Pontos e Issues por sprint</li>
+            <div id="bar-chart-status" ></div>
+        </div>
+    </div>
+  </div>
+
+  <br><br><br><br>
+
+  <div class="container">
+    <div class="row">
+        <div class="col-md-6">
+           <li align="middle">Status por dia</li>
+              <div id="area-example" ></div>
+        </div>
+        <div class="col-md-6">
+          <li align="middle" >Pontos e Issues por dia</li>
+             <div id="myfirstchart" style="height: 250px;"></div>
+        </div>
+    </div>
+  </div>
+
+  <!-- OLD CHARTS -->
+  <!-- <img src={{ charts[0] }} alt="ChartA" align="middle">
   <p>{{ a }}</p>
   <img src={{ charts[1] }} alt="ChartB" align="middle">
   <p>{{ b }}</p>
@@ -268,7 +308,9 @@ window.onload = function setOrgs() {
   <img src={{ charts[6] }} alt="ChartG" align="middle">
   <img src={{ charts[7] }} alt="ChartH" align="middle">
   <img src={{ charts[8] }} alt="ChartI" align="middle">
-  <img src={{ charts[9] }} alt="ChartJ" align="middle">
+  <img src={{ charts[9] }} alt="ChartJ" align="middle"> -->
+
+
   <h2>Resumo dev time</h2>
   <table>
   <tr>
@@ -297,6 +339,62 @@ window.onload = function setOrgs() {
 </div>
 <script type="text/javascript">
 
+
+/*
+ * Play with this code and it'll update in the panel opposite.
+ *
+ * Why not try some of the options above?
+ */
+
+var dataDonutPointsChart = JSON.parse('{{donutSprintsPointsChart|tojson|safe}}');
+var dataDonutIssuesChart = JSON.parse('{{donutSprintsIssuesChart|tojson|safe}}');
+  /*[
+    {label: "Download Sales", value: 12},
+    {label: "In-Store Sales", value: 30},
+    {label: "Mail-Order Sales", value: 20}
+  ];
+*/
+Morris.Donut({
+  element: 'donut-points-sprints',
+  data: dataDonutPointsChart
+});
+
+Morris.Donut({
+  element: 'donut-issues-sprints',
+  data: dataDonutIssuesChart
+});
+
+
+/*
+ * Play with this code and it'll update in the panel opposite.
+ *
+ * Why not try some of the options above?
+ */
+ var dataBarChartAssignees = JSON.parse('{{dataBarChartAssignees|tojson|safe}}');
+ var dataBarChartStatus = JSON.parse('{{dataBarChartStatus|tojson|safe}}');
+ var labelsBarA = '{{labelsBarA}}';
+ var labelsBarB = '{{labelsBarB}}';
+
+Morris.Bar({
+  element: 'bar-chart-assignees',
+  data: dataBarChartAssignees ,
+  xkey: 'y',
+  ykeys: ['a', 'b'],
+  labels: [labelsBarA, labelsBarB]
+
+});
+
+Morris.Bar({
+  element: 'bar-chart-status',
+  data: dataBarChartStatus ,
+  xkey: 'y',
+  ykeys: ['a', 'b'],
+  labels: [labelsBarA, labelsBarB]
+
+});
+
+
+
 new Morris.Line({
   // ID of the element in which to draw the chart.
   element: 'myfirstchart',
@@ -324,6 +422,10 @@ new Morris.Line({
  *
  * Why not try some of the options above?
  */
+
+var labelsBarA = '{{labelsBarA}}';
+ var labelsBarB = '{{labelsBarB}}';
+
 Morris.Area({
   element: 'area-example',
   
@@ -338,47 +440,8 @@ Morris.Area({
   ],
   xkey: 'y',
   ykeys: ['a', 'b'],
-  labels: ['Series A', 'Series B']
+  labels: [labelsBarA, labelsBarB]
 
-});
-
-/*
- * Play with this code and it'll update in the panel opposite.
- *
- * Why not try some of the options above?
- */
-Morris.Bar({
-  element: 'bar-example',
-  data: dataBarChart , //[
-  //   { y: '2006', a: 100, b: 90 },
-  //   { y: '2007', a: 75,  b: 65 },
-  //   { y: '2008', a: 50,  b: 40 },
-  //   { y: '2009', a: 75,  b: 65 },
-  //   { y: '2010', a: 50,  b: 40 },
-  //   { y: '2011', a: 75,  b: 65 },
-  //   { y: '2012', a: 100, b: 90 }
-  // ],
-  xkey: xkeyBarChart,
-  ykeys: ['a', 'b'],
-  labels: ['Series A', 'Series B']
-});
-
-/*
- * Play with this code and it'll update in the panel opposite.
- *
- * Why not try some of the options above?
- */
-
-  var dataDonutChart = JSON.parse('{{donutSprintsPointsChart|tojson|safe}}');
-  /*[
-    {label: "Download Sales", value: 12},
-    {label: "In-Store Sales", value: 30},
-    {label: "Mail-Order Sales", value: 20}
-  ];
-*/
-Morris.Donut({
-  element: 'donut-example',
-  data: dataDonutChart
 });
 
 </script>

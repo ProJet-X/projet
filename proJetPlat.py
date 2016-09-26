@@ -835,6 +835,9 @@ def renderDashboard(org, repo):
     print(graphsURLs)
     a = "Comparação por colaborador"
     b = "Comparação por sprint"
+
+    orgs = ["AAa","BBb","cCC","dDD"]
+     
     charts = []
     try:
         charts.append(graphsURLs[0])
@@ -880,35 +883,71 @@ def renderDashboard(org, repo):
     working=5
     done=6
 
-    data = [
+    dataBarChart = [
     { 'y': '2006', 'a': 100, 'b': 90 },
-    { 'y': '2007', 'a': 100,  'b': 65 },
+    { 'y': '2007', 'a': 100, 'b': 65 },
     { 'y': '2008', 'a': 75,  'b': 40 },
     { 'y': '2009', 'a': 75,  'b': 65 },
     { 'y': '2010', 'a': 75,  'b': 40 },
     { 'y': '2011', 'a': 75,  'b': 65 },
     { 'y': '2012', 'a': 300, 'b': 90 }
   ]
-    xkey = 'y'
-    ykeys = ['a', 'b'],
-    orgs = ["AAa","BBb","cCC","dDD"]
-    labels = ['Series AAA', 'Series BBB']
+   
+    
+    labelsBarA = 'Issues'
+    labelsBarB = 'Points'
+    
+    dataBarChartAssignees = []
+    barChartsAssignees = {'assignees':[assigneesIssues, assigneesPoints ]}
+    for key, value in barChartsAssignees.items():
+        barA = sorted(value[0].items(), key=operator.itemgetter(0))
+        barB = sorted(value[1].items(), key=operator.itemgetter(0))
+        print(barA)
+        print(barB)
+        if len(value[0]) > 0 and len(value[1]) > 0:
+            i = 0
+            for bA in barA:
+                bB = barB[i]
+                dataBarChartAssignees.append({ 'y': bA[0],
+                                           'a': bA[1], 'b': bB[1] })
+                i = i+1
+    dataBarChartStatus = []
+    barChartsStatus = {'status':[statusIssues, statusPoints]}
+    for key, value in barChartsStatus.items():
+        barA = sorted(value[0].items(), key=operator.itemgetter(0))
+        barB = sorted(value[1].items(), key=operator.itemgetter(0))
+        print(barA)
+        print(barB)
+        if len(value[0]) > 0 and len(value[1]) > 0:
+            i = 0
+            for bA in barA:
+                bB = barB[i]
+                dataBarChartStatus.append({ 'y': bA[0],
+                                           'a': bA[1], 'b': bB[1] })
+                i = i+1
 
     donutSprintsPointsChart = []
     for dSPC in sorted(sprintsPoints.items(), key=operator.itemgetter(0)):
         donutSprintsPointsChart.append({'label':dSPC[0],'value':dSPC[1]})
 
+    donutSprintsIssuesChart = []
+    for dSIC in sorted(sprintsIssues.items(), key=operator.itemgetter(0)):
+        donutSprintsIssuesChart.append({'label':dSIC[0],'value':dSIC[1]})
+
     print("\n")
     print("To render:")
-    print(orgs, issuesIndicators, org, repo, a, b,charts, donutSprintsPointsChart)
+    print(barChartsStatus, dataBarChartAssignees)
     return render_template('dashboard.html', render=True, orgs=orgs,
                            issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
                            charts=charts,
                            devs=devs,taskId=taskId,taskPoints=taskPoints,
                            created_at=created_at,working=working,done=done,
-                           data=data,xkey=xkey,ykeys=ykeys,labels=labels,
-                           donutSprintsPointsChart=donutSprintsPointsChart)
+                           dataBarChartAssignees=dataBarChartAssignees,
+                           dataBarChartStatus=dataBarChartStatus,
+                           labelsBarA=labelsBarA,labelsBarB=labelsBarB,
+                           donutSprintsPointsChart=donutSprintsPointsChart,
+                           donutSprintsIssuesChart=donutSprintsIssuesChart)
 
 #################################################################
 #                       PROJET WEB PLAT AUTH
