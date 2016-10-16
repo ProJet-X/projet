@@ -4,10 +4,16 @@ from datetime import datetime
 
 class PyMongoDB():
 
+        """docstring for PyMongoDB"""
+        def __init__(self, arg):
+                super(PyMongoDB, self).__init__()
+                self.arg = arg
+
         clientMongo = ""
         db = ""
         usersColl = ""
         issuesColl = ""
+        eventsColl = ""
 
         def connectMongo():
 
@@ -15,6 +21,8 @@ class PyMongoDB():
                 global db
                 global issuesColl
                 global usersColl
+                global eventsColl
+
 
                 print("\n")
                 print(str(datetime.now()))
@@ -27,24 +35,28 @@ class PyMongoDB():
 
                         db = clientMongo.test_database
                         print(db)
-
-                        usersColl = db.users
-                        issuesColl = db.issues
-                        #eventsColl = db.events
-                        print(usersColl)
-
+                        
+                       
                         try:
+                                usersColl = db.users
                                 result = usersColl.create_index([('user_id', pymongo.ASCENDING)], unique=True)
                                 print(str(result))
                         except:
                                 pass
                         
                         try:
+                                issuesColl = db.issues
                                 result = issuesColl.create_index([('repo_name', pymongo.TEXT)], unique=True)
                                 print(str(result))
                         except:
                                 pass
-                        print(usersColl.index_information())
+                        try:
+                                eventsColl = db.events
+                                result = eventsColl.create_index([('repo_name', pymongo.TEXT)], unique=True)
+                                print(str(result))
+                        except:
+                                pass
+
                         print("Finished mongoDB configs")
                 except:
                         print("MongoDB config ERROR!")
@@ -56,6 +68,9 @@ class PyMongoDB():
         def countUsers():
                 global usersColl
                 return usersColl.find().count()
+        def countEvents():
+                global eventsColl
+                return eventsColl.find().count()
 
         def getIssuesColl():
                 global issuesColl
@@ -65,13 +80,24 @@ class PyMongoDB():
                 global usersColl
                 return usersColl
 
+        def getEventsColl():
+                global eventsColl
+                return eventsColl
 
         def resetIssuesColl():
                 global issuesColl
+                print(str(issuesColl.find().count()))
                 issuesColl.drop()
                 print(str(issuesColl.find().count()))
 
         def resetUsersColl():
                 global usersColl
+                print(str(usersColl.find().count()))
                 usersColl.drop()
                 print(str(usersColl.find().count()))
+
+        def resetEventsColl():
+                global eventsColl
+                print(str(eventsColl.find().count()))
+                eventsColl.drop()
+                print(str(eventsColl.find().count()))

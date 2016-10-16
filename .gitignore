@@ -1,7 +1,7 @@
 pieCharts/
 barCharts/
 lineCharts/
-issueMappedDumpJSON.txt
 bar*
 node_modules/
 __pycache__/
+issueMappedDumpJSON.txt

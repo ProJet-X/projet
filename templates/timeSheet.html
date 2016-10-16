@@ -1,89 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title></title>
+  <title>Timesheet</title>
+  <meta charset="utf-8">
 
-<script src="https://cdn.rawgit.com/bradberger/angular-material-calendar/master/dist/angular-material-calendar.js"></script>
+  <!-- CALENDAR -->
+  <link rel='stylesheet' href='fullcalendar/fullcalendar.css' />
+  <script src='lib/jquery.min.js'></script>
+  <script src='lib/moment.min.js'></script>
+  <script src='fullcalendar/fullcalendar.js'></script>
+
+  <script src="https://cdn.rawgit.com/bradberger/angular-material-calendar/master/dist/angular-material-calendar.js"></script>
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
+
+  <style>
+
+/*DROPDOWN MENU*/
+  li {
+    float: left;
+  }
+
+  li a, .dropbtn {
+    display: inline-block;
+    color: black;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    
+  }
+
+  li a:hover, .dropdown:hover .dropbtn {
+      background-color: #23a988;
+      
+  }
+
+  li.dropdown {
+      display: inline-block;
+      float: right;
+      margin-right: 15dp;
+      
+  }
+
+  .dropdown-content {
+      display: none;
+      position: fixed;
+      background-color: #000000;
+      left:auto;
+      right:0;
+      margin-right:-10px;
+      min-width: 100px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      
+  }
+
+  .dropdown-content a {
+      color: black;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      text-align: left;
+      
+  }
+
+  .dropdown-content a:hover {background-color: #000000}
+
+  .dropdown:hover .dropdown-content {
+      display: block;
+      z-index:1;
+  }
+
+  </style>
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+
+    // page is now ready, initialize the calendar...
+
+    $('#calendar').fullCalendar({
+        // put your options and callbacks here
+
+        $('#calendar').fullCalendar({
+          dayClick: function() {
+          alert('a day has been clicked!');
+    }
+});
+    })
+
+});
+
+</script>
 
 </head>
 <body>
 
 {% include "topBar.html" %}
 
+{% include "sideBar.html" %}
 
-<div>
 
-<calendar-md flex layout layout-fill
-  calendar-direction="direction"
-  on-prev-month="prevMonth"
-  on-next-month="nextMonth"
-  on-day-click="dayClick"
-  title-format="'MMMM y'"
-  ng-model='selectedDate'
-  week-starts-on="firstDayOfWeek"
+<div class="content">
 
-  data-start-month="8"
+<form class="row form-inline">
+  <div class="form-group col-sm-2 col-xs-6">
+    <input type="text" class="form-control" id="exampleInputName2" placeholder="Name">
+  </div>
+  <div class="form-group col-sm-2 col-xs-6">
+    <input type="email" class="form-control" id="exampleInputEmail2" placeholder="Email">
+  </div>
+  <div class="form-group col-sm-2 col-xs-6">
+    <input type="email" class="form-control" id="exampleInputEmail2" placeholder="Email">
+  </div>
+  <li class="dropdown">
+    <a href="#" class="dropbtn">Conta</a>
+    <div class="dropdown-content">
+      <a href="/auth">Login com outra conta</a>
+      <a href="/logout" target="_top">LogOut</a>
+    </div>
+  </li>
 
-  data-start-year="2014"
-  tooltips="tooltips"
-  day-format="dayFormat"
-  day-label-format="'EEE'"
-  day-label-tooltip-format="'EEEE'"
-  day-tooltip-format="'fullDate'"
-  day-content="setDayContent"
-  disable-future-selection="false"></calendar-md>
+  <div class="checkbox form-group col-sm-2 col-xs-6">
+    <label class="custom-checkbox">
+      <input type="checkbox">
+      <span>Remember me</span>
+    </label>
+  </div>
+  <button type="submit" class="btn btn-primary form-group col-sm-2 col-xs-6">Send invitation</button>
+</form>
+
+<div id='calendar'></div>
+
 </div>
-<script>
-angular.module("materialExample", ["ngMaterial", "materialCalendar"]);
 
-angular.module("materialExample").controller("calendarCtrl", function($scope, $filter, $http, $q) {
-
-    $scope.dayFormat = "d";
-
-    // To select a single date, make sure the ngModel is not an array.
-    $scope.selectedDate = null;
-
-    // If you want multi-date select, initialize it as an array.
-    $scope.selectedDate = [];
-
-    $scope.firstDayOfWeek = 0; // First day of the week, 0 for Sunday, 1 for Monday, etc.
-    $scope.setDirection = function(direction) {
-      $scope.direction = direction;
-      $scope.dayFormat = direction === "vertical" ? "EEEE, MMMM d" : "d";
-    };
-
-    $scope.dayClick = function(date) {
-      $scope.msg = "You clicked " + $filter("date")(date, "MMM d, y h:mm:ss a Z");
-    };
-
-    $scope.prevMonth = function(data) {
-      $scope.msg = "You clicked (prev) month " + data.month + ", " + data.year;
-    };
-
-    $scope.nextMonth = function(data) {
-      $scope.msg = "You clicked (next) month " + data.month + ", " + data.year;
-    };
-
-    $scope.tooltips = true;
-    $scope.setDayContent = function(date) {
-
-        // You would inject any HTML you wanted for
-        // that particular date here.
-        return "<p></p>";
-
-        // You could also use an $http function directly.
-        return $http.get("/some/external/api");
-
-        // You could also use a promise.
-        var deferred = $q.defer();
-        $timeout(function() {
-            deferred.resolve("<p></p>");
-        }, 1000);
-        return deferred.promise;
-
-    };
-
-});
-</script>:
 </body>
 </html>

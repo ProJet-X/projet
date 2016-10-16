@@ -1,38 +1,54 @@
+import time
+import json
+
+from datetime import datetime
+import operator
+
+from pyMongoDB import PyMongoDB 
+from github import Github
+
+
 class GitMapper(object):
+
     """docstring for GitMapper"""
-    def __init__(self, arg):
+    def __init__(self, gRepo):
         super(GitMapper, self).__init__()
-        self.arg = arg
+        self.gRepo = gRepo
+        ## Represents the points per milestones
+        self.sprintsPoints = {}
+        ## Represents the points per dev
+        self.assigneesPoints = {}
+        ## Represents the points per dev in which milestone
+        self.sprintsPointsDevs = {}
+        ## Represents the points per status
+        self.statusPoints = {}
+        ## Represents the points per dev in which status
+        self.statusPointsDevs = {}
+
+        ## Represents the number of issues per milestones
+        self.sprintsIssues = {}
+        ## Represents the number of issues per status
+        self.statusIssues = {}
+        ## Represents the number of issues per dev
+        self.assigneesIssues = {}
+        ## Represents the number of issues per dev in which milestone
+        self.sprintsIssuesDevs = {}
+        ## Represents the number of issues per dev in which status
+        self.statusIssuesDevs = {}
+
+        ## General events
+        self.events = []
 		
 ################################################################# 
 #                    GITHUB - MAPPER 
 #################################################################           
-    def issueMapper(i):
-        
-        global totalPoints
-        global totalIssues
-        global totalIssuesWithPoints
-        global totalIssuesWithoutPoints
-        global totalPullRequest
-        
-        global sprintsPoints
-        global assigneesPoints
-        global sprintsPointsDevs
-        global statusPoints
-        global statusPointsDevs
-        
-        global sprintsIssues
-        global assigneesIssues
-        global sprintsIssuesDevs
-        global statusIssues
-        global statusIssuesDevs
-
-        global events
+    def issueMapper(self,i):
         
         MAX_POINTS = 100
 
         ## Get sprint if the issue is milestones
-        
+        print("here" + str(totalPoints))
+        print(str(i))
         if i.milestone == None:
             sprint = "Unk Sprint"
         else:
@@ -56,7 +72,7 @@ class GitMapper(object):
                 elif i.title.rfind("- Pt") != -1:
                     pt = int(i.title.split(" - Pt")[1])
                 else:
-                    totalIssuesWithoutPoints = totalIssuesWithoutPoints + 1
+                    self.totalIssuesWithoutPoints = self.totalIssuesWithoutPoints + 1
                     print("Issue #" + str(i.number) + " sem estimativa de pontos de esforço:")
                 ## Points validation
                 if pt > MAX_POINTS:
@@ -70,90 +86,90 @@ class GitMapper(object):
                     print("Pontuação alterada para: " + str(pt))
                 print("Pontos da issue #" + str(i.number) + ", " + str(i.title) + ": " + str(pt))
                 totalPoints = totalPoints + pt
-                totalIssuesWithPoints = totalIssuesWithPoints + 1
+                self.totalIssuesWithPoints = self.totalIssuesWithPoints + 1
                 ## Milestone points
-                if list(sprintsPoints.keys()).count(sprint) == 1:
-                    sprintsPoints[sprint] = sprintsPoints[sprint] + pt
+                if list(self.sprintsPoints.keys()).count(sprint) == 1:
+                    self.sprintsPoints[sprint] = self.sprintsPoints[sprint] + pt
                 else:
-                    sprintsPoints[sprint] = pt
+                    self.sprintsPoints[sprint] = pt
                 ## Assignees points
-                if list(assigneesPoints.keys()).count(developer) == 1:
-                    assigneesPoints[developer] = assigneesPoints[developer] + pt
+                if list(self.assigneesPoints.keys()).count(developer) == 1:
+                    self.assigneesPoints[developer] = self.assigneesPoints[developer] + pt
                 else:
-                    assigneesPoints[developer] = pt
+                    self.assigneesPoints[developer] = pt
                 ## Assignees points per sprint
-                if list(sprintsPointsDevs.keys()).count(sprint) == 1:
-                    if list(sprintsPointsDevs[sprint].keys()).count(developer) == 1:
-                        sprintsPointsDevs[sprint][developer] = sprintsPointsDevs[sprint][developer] + pt
+                if list(self.sprintsPointsDevs.keys()).count(sprint) == 1:
+                    if list(self.sprintsPointsDevs[sprint].keys()).count(developer) == 1:
+                        self.sprintsPointsDevs[sprint][developer] = self.sprintsPointsDevs[sprint][developer] + pt
                     else:
-                        sprintsPointsDevs[sprint].update({developer: pt})
+                        self.sprintsPointsDevs[sprint].update({developer: pt})
                 else:
-                    sprintsPointsDevs[sprint] = {developer: pt}
+                    self.sprintsPointsDevs[sprint] = {developer: pt}
                 ## Status labels points 
                 for l in i.get_labels():
                     status = l.name
                     if status.rfind("-") != -1:
-                        if list(statusPoints.keys()).count(status) == 1:
-                            statusPoints[status] = statusPoints[status] + pt
+                        if list(self.statusPoints.keys()).count(status) == 1:
+                            self.statusPoints[status] = self.statusPoints[status] + pt
                         else:
-                            statusPoints[status] = pt
+                            self.statusPoints[status] = pt
                     ## Assignees points per status
-                    if list(statusPointsDevs.keys()).count(status) == 1:
-                        if list(statusPointsDevs[status].keys()).count(developer) == 1:
-                            statusPointsDevs[status][developer] = statusPointsDevs[status][developer] + pt
+                    if list(self.statusPointsDevs.keys()).count(status) == 1:
+                        if list(self.statusPointsDevs[status].keys()).count(developer) == 1:
+                            self.statusPointsDevs[status][developer] = self.statusPointsDevs[status][developer] + pt
                         else:
-                            statusPointsDevs[status].update({developer: pt})
+                            self.statusPointsDevs[status].update({developer: pt})
                     else:
-                        statusPointsDevs[status] = {developer: pt}
+                        self.statusPointsDevs[status] = {developer: pt}
             except:
                 print("Problema nos pontos da issue #" + str(i.number) + " " + str(i.title))
                 print("!_________________________!_________________________!")
         else:
             print("Pull request: issue #" + str(i.number))
-            totalPullRequest = totalPullRequest + 1
+            self.totalPullRequest = self.totalPullRequest + 1
             #print(str(i.body))
             #print(i.body.split("- #")[1])
             print("\n")
             
         try:
             ## Total number of issues
-            totalIssues = totalIssues + 1
+            self.totalIssues = self.totalIssues + 1
             ## Milestone number of tasks
-            if list(sprintsIssues.keys()).count(sprint) == 1:
-                sprintsIssues[sprint] = sprintsIssues[sprint] + 1
+            if list(self.sprintsIssues.keys()).count(sprint) == 1:
+                self.sprintsIssues[sprint] = self.sprintsIssues[sprint] + 1
             else:
-                sprintsIssues[sprint] = 1
+                self.sprintsIssues[sprint] = 1
             ## Assignees number of tasks
-            if list(assigneesIssues.keys()).count(developer) == 1:
-                assigneesIssues[developer] = assigneesIssues[developer] + 1
+            if list(self.assigneesIssues.keys()).count(developer) == 1:
+                self.assigneesIssues[developer] = self.assigneesIssues[developer] + 1
             else:
-                assigneesIssues[developer] = 1
+                self.assigneesIssues[developer] = 1
             ## Assignees number of tasks per sprint
-            if list(sprintsIssuesDevs.keys()).count(sprint) == 1:
-                if list(sprintsIssuesDevs[sprint].keys()).count(developer) == 1:
-                    sprintsIssuesDevs[sprint][developer] = sprintsIssuesDevs[sprint][developer] + 1
+            if list(self.sprintsIssuesDevs.keys()).count(sprint) == 1:
+                if list(self.sprintsIssuesDevs[sprint].keys()).count(developer) == 1:
+                    self.sprintsIssuesDevs[sprint][developer] = self.sprintsIssuesDevs[sprint][developer] + 1
                 else:
-                    sprintsIssuesDevs[sprint].update({developer: 1})
+                    self.sprintsIssuesDevs[sprint].update({developer: 1})
             else:
-                sprintsIssuesDevs[sprint] = {developer: 1}    
+                self.sprintsIssuesDevs[sprint] = {developer: 1}    
             ## Status labels number of tasks
             for l in i.get_labels():
                 status = l.name
                 print("Labels: " + status)
                 ## Status labels
                 if status.rfind("-") != -1:
-                    if list(statusIssues.keys()).count(status) == 1:
-                        statusIssues[status] = statusIssues[status] + 1
+                    if list(self.statusIssues.keys()).count(status) == 1:
+                        self.statusIssues[status] = self.statusIssues[status] + 1
                     else:
-                        statusIssues[status] = 1
+                        self.statusIssues[status] = 1
                 ## Assignees number of tasks per status
-                if list(statusIssuesDevs.keys()).count(status) == 1:
-                    if list(statusIssuesDevs[status].keys()).count(developer) == 1:
-                        statusIssuesDevs[status][developer] = statusIssuesDevs[status][developer] + 1
+                if list(self.statusIssuesDevs.keys()).count(status) == 1:
+                    if list(self.statusIssuesDevs[status].keys()).count(developer) == 1:
+                        self.statusIssuesDevs[status][developer] = self.statusIssuesDevs[status][developer] + 1
                     else:
-                        statusIssuesDevs[status].update({developer: 1})
+                        self.statusIssuesDevs[status].update({developer: 1})
                 else:
-                    statusIssuesDevs[status] = {developer: 1}
+                    self.statusIssuesDevs[status] = {developer: 1}
         except:
             print("Problema com a issue #" + str(i.number) +" "+str(i.title))
             print("!______________!______________!______________!______________!")
@@ -197,9 +213,9 @@ class GitMapper(object):
                 eventActorTime.append({'event':e.event,'actor':actor,'created_at': str(e.created_at), 'detail':detail.copy()})
                 #print("EAT " + str(eventActorTime))
             issueEvent = {str(i.number):eventActorTime.copy()}
-            events.append(issueEvent.copy())
+            self.events.append(issueEvent.copy())
             print("Appending issue #" + str(i.number) + "events")
-            print(str(len(events)))
+            print(str(len(self.events)))
         print("Issue mapeada")
         print("\n")
 
@@ -207,49 +223,34 @@ class GitMapper(object):
     #                    GITHUB - Logger    
     #################################################################
 
-    def printLog() :
-        global totalPoints
-        global totalIssues
-        global totalPullRequest
-        
-        global sprintsPoints
-        global assigneesPoints
-        global sprintsPointsDevs
-        global statusPoints
-        global statusPointsDevs
-        
-        global sprintsIssues
-        global assigneesIssues
-        global sprintsIssuesDevs
-        global statusIssues
-        global statusIssuesDevs
+    def printLog(self) :
         
         print("Pontos totais: " + str(totalPoints))
-        for sP in sprintsPoints:
-            print("Pontos totais do sprint " + str(sP) + ": " + str(sprintsPoints[sP]))
-        for aP in assigneesPoints:
-            print("Pontos totais do colaborador: " + str(aP) + ": " + str(assigneesPoints[aP]))
-        for sDP in sprintsPointsDevs:
-            print("Pontos do colaborador no sprint: " + str(sDP) + ": " + str(sprintsPointsDevs[sDP]))
-        for stP in statusPoints:
-            print("Pontos por status: " + str(stP) + ": " + str(statusPoints[stP]))
-        for stPD in statusPointsDevs:
-            print("Pontos do colaborador no status: " + str(stPD) + ": " + str(statusPointsDevs[stPD]))
+        for sP in self.sprintsPoints:
+            print("Pontos totais do sprint " + str(sP) + ": " + str(self.sprintsPoints[sP]))
+        for aP in self.assigneesPoints:
+            print("Pontos totais do colaborador: " + str(aP) + ": " + str(self.assigneesPoints[aP]))
+        for sDP in self.sprintsPointsDevs:
+            print("Pontos do colaborador no sprint: " + str(sDP) + ": " + str(self.sprintsPointsDevs[sDP]))
+        for stP in self.statusPoints:
+            print("Pontos por status: " + str(stP) + ": " + str(self.statusPoints[stP]))
+        for stPD in self.statusPointsDevs:
+            print("Pontos do colaborador no status: " + str(stPD) + ": " + str(self.statusPointsDevs[stPD]))
         print("\n")
 
-        print("Numero de tarefas totais: " + str(totalIssues))
-        print("Numero de tarefas como Pull Request: " + str(totalPullRequest))
-        for sI in sprintsIssues:
-            print("Numero de tarefas totais do sprint " + str(sI) + ": " + str(sprintsIssues[sI]))
-        for aI in assigneesIssues:
-            print("Numero de tarefas totais do colaborador: " + str(aI) + ": " + str(assigneesIssues[aI]))
-        for sID in sprintsIssuesDevs:
-            print("Numero de tarefas do colaborador no sprint: " + str(sID) + ": " + str(sprintsIssuesDevs[sID]))
-        for stI in statusIssues:
-            print("Numero de tarefas por status: " + str(stI) + ": " + str(statusIssues[stI]))
-        for stID in statusIssuesDevs:
-            print("Numero de tarefas do colaborador no status: " + str(stID) + ": " + str(statusIssuesDevs[stID]))
-        print("Quantidade de issues com eventos: " + str(len(events)))
+        print("Numero de tarefas totais: " + str(self.totalIssues))
+        print("Numero de tarefas como Pull Request: " + str(self.totalPullRequest))
+        for sI in self.sprintsIssues:
+            print("Numero de tarefas totais do sprint " + str(sI) + ": " + str(self.sprintsIssues[sI]))
+        for aI in self.assigneesIssues:
+            print("Numero de tarefas totais do colaborador: " + str(aI) + ": " + str(self.assigneesIssues[aI]))
+        for sID in self.sprintsIssuesDevs:
+            print("Numero de tarefas do colaborador no sprint: " + str(sID) + ": " + str(self.sprintsIssuesDevs[sID]))
+        for stI in self.statusIssues:
+            print("Numero de tarefas por status: " + str(stI) + ": " + str(self.statusIssues[stI]))
+        for stID in self.statusIssuesDevs:
+            print("Numero de tarefas do colaborador no status: " + str(stID) + ": " + str(self.statusIssuesDevs[stID]))
+        print("Quantidade de issues com eventos: " + str(len(self.events)))
         print("\n")
         #####################
         #Estimator.estimate()
@@ -261,7 +262,7 @@ class GitMapper(object):
     #                    GITHUB - MAPPER    
     #################################################################
     def repoMapper(gRepo):
-        
+        print("here")
         try:
             issueId = ""
             if issueId == "":
@@ -271,7 +272,8 @@ class GitMapper(object):
                 while lookup == True:
                     try:
                         issue = gRepo.get_issue(issueCounter)
-                        issueMapper(issue)
+                        print(issue)
+                        GitMapper.issueMapper(issue)
                         print("issue mapped")
                         issueCounter = issueCounter + 1
                     except:
@@ -280,7 +282,7 @@ class GitMapper(object):
             else:
                 issue = gRepo.get_issue(issueId)
                 issueMapper(issue)
-            printLog()
+            GitMapper.printLog()
         except:
             print("Issue não existe")
      
@@ -288,40 +290,16 @@ class GitMapper(object):
     #################################################################
     #                        PROCESS    
     #################################################################
-
-    def startMetrics():
-
-        global gRepo
-
-        global totalPoints
-        global totalIssues
-        global totalPullRequest
-        global totalIssuesWithPoints
-        global totalIssuesWithoutPoints
-        
-        global sprintsPoints
-        global sprintsIssues
-        
-        global assigneesPoints
-        global assigneesIssues
-        
-        global statusPoints
-        global statusIssues
-
-        global sprintsPointsDevs
-        global sprintsIssuesDevs
-        
-        global statusPointsDevs
-        global statusIssuesDevs
-
-        global events
-        
+    
+    def startMetrics(self):
+        PyMongoDB.connectMongo()
+        issuesMapped = {}
         i=0
         print("Colaboradores do repositorio:")
-        for x in gRepo.get_collaborators():
+        for x in self.gRepo.get_collaborators():
             print(x.login)
         print("Alocáveis do repositorio:")
-        for x in gRepo.get_assignees():
+        for x in self.gRepo.get_assignees():
             print(x.login)
         print("\n")
                    
@@ -330,10 +308,10 @@ class GitMapper(object):
         print(startTimeMetrics)
         print("\n")
         issuesColl = PyMongoDB.getIssuesColl()
-        if issuesColl.find({"repo_name": str(gRepo.name)}).count() == 1:
+        if issuesColl.find({"repo_name": str(self.gRepo.name)}).count() == 1:
             print("Existe repo mapeado: ")
             
-            issuesData = issuesColl.find_one({"repo_name": gRepo.name})
+            issuesData = issuesColl.find_one({"repo_name": self.gRepo.name})
             
             totalPoints = issuesData.get('total_points')
             totalIssues = issuesData.get('total_issues')
@@ -358,13 +336,7 @@ class GitMapper(object):
 
             events = issuesData.get('events')
             print("Last updated: " + str(issuesData.get('last_update')))
-            
-        else:
-            print("Iniciando mapeamendo do repo: " + str(gRepo.name))
-            try:
-                repoMapper(gRepo)
-                print("Repo mapeado")
-                issueMapped = {'repo_name':gRepo.name,
+            issuesMapped = {'repo_name':self.gRepo.name,
                          'total_points':totalPoints,
                          'total_issues':totalIssues,
                          'total_pull_request':totalPullRequest,
@@ -382,15 +354,54 @@ class GitMapper(object):
                          'status_issues_devs':statusIssuesDevs,
                          'events':events,
                          'last_update':str(startTimeMetrics)}
-                print(issueMapped.keys())
-                issue_id = issuesColl.insert_one(issueMapped).inserted_id
+        else:
+            print("Iniciando mapeamendo do repo: " + str(self.gRepo.name))
+            try:
+                try:
+                    print("A")
+                    self.repoMapper(self.gRepo)
+                except Exception as e:
+                    print("B" + str(e))
+                    raise
+                else:
+                    print("C")
+                    
+                finally:
+                    print("D")
+                    try:
+                        print("E")
+                        self.repoMapper(self.gRepo)
+                    except:
+                        pass
+                print("Repo mapeado")
+                issuesMapped = {'repo_name':self.gRepo.name,
+                         'total_points':totalPoints,
+                         'total_issues':totalIssues,
+                         'total_pull_request':totalPullRequest,
+                         'total_issues_with_points':totalIssuesWithPoints,
+                         'total_issues_without_points':totalIssuesWithoutPoints,
+                         'sprints_points':sprintsPoints,
+                         'sprints_issues':sprintsIssues,
+                         'status_points':statusPoints,
+                         'status_issues':statusIssues,
+                         'assignees_points':assigneesPoints,
+                         'assignees_issues':assigneesIssues,
+                         'sprints_points_devs':sprintsPointsDevs,
+                         'sprints_issues_devs':sprintsIssuesDevs,
+                         'status_points_devs':statusPointsDevs,
+                         'status_issues_devs':statusIssuesDevs,
+                         'events':events,
+                         'last_update':str(startTimeMetrics)}
+                print(issuesMapped.keys())
+                issue_id = issuesColl.insert_one(issuesMapped).inserted_id
                 print("Colleção adicionada: " + str(issue_id))
                 # http://stackoverflow.com/questions/15415709/update-json-file
                 # http://stackoverflow.com/questions/13949637/how-to-update-json-file-with-python
                 # https://docs.python.org/2/tutorial/inputoutput.html
-                #with open('issueMappedDumpJSON.txt', 'w') as outfile:
-                #    json.dump(issueMapped, outfile)
+                #with open('issuesMappedDumpJSON.txt', 'w') as outfile:
+                #    json.dump(issuesMapped, outfile)
             except:
                 print("Erro ao adicionar os dados ao banco de dados")
         print(datetime.now() - startTimeMetrics)
         print("\n")
+        return issuesMapped

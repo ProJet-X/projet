@@ -6,9 +6,10 @@ import operator
 
 from chartFileHelper import ChartFileHelper
 from timeEstimator import Estimator
+from gitMapper import GitMapper
+from gitEventMapper import GitEventMapper 
 
 from pyMongoDB import PyMongoDB 
-
 from github import Github
 
 from flask import Flask, render_template, session, redirect, url_for, escape, request
@@ -69,6 +70,7 @@ statusIssuesDevs = {}
 
 ## General events
 events = []
+evo = []
 
 ################################################################# 
 #                    GITHUB - MAPPER 
@@ -316,6 +318,7 @@ def printLog() :
     for stID in statusIssuesDevs:
         print("Numero de tarefas do colaborador no status: " + str(stID) + ": " + str(statusIssuesDevs[stID]))
     print("Quantidade de issues com eventos: " + str(len(events)))
+                
     print("\n")
     #####################
     #Estimator.estimate()
@@ -356,7 +359,7 @@ def repoMapper(gRepo):
 #################################################################
 
 def startMetrics():
-
+    
     global gRepo
 
     global totalPoints
@@ -381,7 +384,28 @@ def startMetrics():
     global statusIssuesDevs
 
     global events
+
+    global evo
+
+    metrics = {}
+    try:
+        metrics = GitMapper.startMetrics(gRepo,PyMongoDB)
+    except Exception as e:
+        print("GitMapper error: " + str(e))
+    print(metrics.keys())
+
+
+    try:
+        print("Events Map")
+        gEM = GitEventMapper(gRepo)
+        evo = gEM.getMappedEvents()
+    except Exception as e:
+        print("GitEventsMapper error: " + str(e))
+    print(evo)
     
+    print("\n")
+    print("\n")
+    print("\n")
     i=0
     print("Colaboradores do repositorio:")
     for x in gRepo.get_collaborators():
@@ -451,17 +475,83 @@ def startMetrics():
             print(issueMapped.keys())
             issue_id = issuesColl.insert_one(issueMapped).inserted_id
             print("Colleção adicionada: " + str(issue_id))
-            # http://stackoverflow.com/questions/15415709/update-json-file
-            # http://stackoverflow.com/questions/13949637/how-to-update-json-file-with-python
-            # https://docs.python.org/2/tutorial/inputoutput.html
-            #with open('issueMappedDumpJSON.txt', 'w') as outfile:
-            #    json.dump(issueMapped, outfile)
+
+            try:
+                # http://stackoverflow.com/questions/15415709/update-json-file
+                # http://stackoverflow.com/questions/13949637/how-to-update-json-file-with-python
+                # https://docs.python.org/2/tutorial/inputoutput.html
+                with open('issueMappedDumpJSON.txt', 'w') as outfile:
+                    json.dump(issueMapped, outfile)
+            except:
+                print("Erro no arquivo de dump")
+        
         except:
             print("Erro ao adicionar os dados ao banco de dados")
     print(datetime.now() - startTimeMetrics)
     print("\n")
 
-    
+#################################################################
+#                        RENDERER - AREA CHART
+#################################################################
+
+def eventChart():
+    global evo
+    dataPoints = []
+    dataIssues = []
+    i = 0
+    e = evo.copy()
+    print("A" + str(len(e)))
+    while i < len(e):
+        pointsQA = 0
+        issuesQA = 0
+        pointsDone = 0
+        issuesDone = 0
+        d = datetime.strptime(e[i].get('date'), '%Y-%m-%d %H:%M:%S').strftime('%m-%d')
+        print(str(e[i].get('issue')))
+
+        if int(e[i].get('status')) == 4:
+            issuesQA = issuesQA + 1
+            if  int(e[i].get('points')) > 0:
+                pointsQA = pointsQA + e[i].get('points')
+            else:
+                print("SEM ESTIMATIVA")
+        elif int(e[i].get('status')) == 4:
+            issuesDone = issuesDone + 1
+            if  int(e[i].get('points')) > 0:
+                pointsDone = pointsDone + e[i].get('points')
+            else:
+                print("SEM ESTIMATIVA")
+        
+        lookupEvents = False
+        j = i + 1
+        while lookupEvents and j < len(e):
+            
+            if d == datetime.strptime(e[j].get('date'), '%Y-%m-%d %H:%M:%S').strftime('%m-%d'):
+                print("B")
+                if int(e[j].get('status')) == 4:
+                    issuesQA = issuesQA + 1
+                    if  int(e[j].get('points')) > 0:
+                        pointsQA = pointsQA + e[j].get('points')
+                    else:
+                        print("SEM ESTIMATIVA")
+                elif int(e[j].get('status')) == 4:
+                    issuesDone = issuesDone + 1
+                    if  int(e[j].get('points')) > 0:
+                        pointsDone = pointsDone + e[j].get('points')
+                    else:
+                        print("SEM ESTIMATIVA")
+                print(len(e))
+                print("Issue: " + str(e[j].get('issue')))
+                del e[j]
+                print(len(e))
+            else:
+                lookupEvents = False
+                j = j + 1
+        dataPoints.append({ 'y': d, 'a': pointsQA, 'b': pointsDone })
+        dataIssues.append({ 'y': d, 'a': issuesQA, 'b': issuesDone })
+        i = i + 1
+    return dataPoints
+
 #################################################################
 #                        RENDERER
 #################################################################
@@ -489,6 +579,8 @@ def renderDashboard(org, repo):
     global sprintsIssuesDevs
     global statusIssues
     global statusIssuesDevs
+
+    global evo
     
     print(org)
     print(repo)
@@ -546,17 +638,6 @@ def renderDashboard(org, repo):
     created_at=4
     working=5
     done=6
-
-    dataBarChart = [
-    { 'y': '2006', 'a': 100, 'b': 90 },
-    { 'y': '2007', 'a': 100, 'b': 65 },
-    { 'y': '2008', 'a': 75,  'b': 40 },
-    { 'y': '2009', 'a': 75,  'b': 65 },
-    { 'y': '2010', 'a': 75,  'b': 40 },
-    { 'y': '2011', 'a': 75,  'b': 65 },
-    { 'y': '2012', 'a': 300, 'b': 90 }
-  ]
-   
     
     labelsBarA = 'Issues'
     labelsBarB = 'Points'
@@ -598,9 +679,11 @@ def renderDashboard(org, repo):
     for dSIC in sorted(sprintsIssues.items(), key=operator.itemgetter(0)):
         donutSprintsIssuesChart.append({'label':dSIC[0],'value':dSIC[1]})
 
+    data = eventChart()
+
     print("\n")
     print("To render:")
-    print(barChartsStatus, dataBarChartAssignees)
+    print(data)
     return render_template('dashboard.html', render=True, orgs=orgs,
                            issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
@@ -611,7 +694,10 @@ def renderDashboard(org, repo):
                            dataBarChartStatus=dataBarChartStatus,
                            labelsBarA=labelsBarA,labelsBarB=labelsBarB,
                            donutSprintsPointsChart=donutSprintsPointsChart,
-                           donutSprintsIssuesChart=donutSprintsIssuesChart)
+                           donutSprintsIssuesChart=donutSprintsIssuesChart,
+                           areaQADone=data)
+
+
 
 #################################################################
 #                       PROJET WEB PLAT AUTH

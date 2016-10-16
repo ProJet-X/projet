@@ -3,7 +3,14 @@
 <head>
 <!-- get the required files from 3rd party sources -->
 <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 /*FIX TOP MENU*/
 
@@ -34,17 +41,19 @@ li a, .dropbtn {
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
-  z-index:1;
+  
 }
 
 li a:hover, .dropdown:hover .dropbtn {
-    background-color: red;
+    background-color: #23a988;
+    
 }
 
 li.dropdown {
     display: inline-block;
     float: right;
     margin-right: 15dp;
+    
 }
 
 .dropdown-content {
@@ -56,7 +65,7 @@ li.dropdown {
     margin-right:-10px;
     min-width: 100px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index:1;
+    
 }
 
 .dropdown-content a {
@@ -65,13 +74,14 @@ li.dropdown {
     text-decoration: none;
     display: block;
     text-align: left;
-    z-index:1;
+    
 }
 
 .dropdown-content a:hover {background-color: #f1f1f1}
 
 .dropdown:hover .dropdown-content {
     display: block;
+    z-index:1;
 }
 
 
@@ -81,12 +91,12 @@ li.dropdown {
 <body>
 
 <ul class="fixedOnTop">
-  <li><a class="active" href="#home">ProJet</a></li>
+  <li><a class="active" href="/">ProJet</a></li>
   
   <li align="right"  class="dropdown">
     <a href="#" class="dropbtn">Conta</a>
     <div class="dropdown-content">
-      <a href="#">Login com outra conta</a>
+      <a href="/auth">Login com outra conta</a>
       <a href="/logout" target="_top">LogOut</a>
     </div>
   </li>

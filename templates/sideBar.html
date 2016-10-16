@@ -3,9 +3,16 @@
 <head>
 <!-- get the required files from 3rd party sources -->
 <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
+
 
 /*RESPONSIVE MENU*/
 body {
@@ -19,7 +26,7 @@ ul.sidenav {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    width: 15%;
+    width: 10%;
     background-color: #333;
     position: fixed;
     height: 100%;
@@ -36,26 +43,34 @@ ul.sidenav li a {
 }
  
 ul.sidenav li a.active {
-    background-color: #4CAF50;
+    background-color: #1a7f75;
     color: white;
+    width:100%;
 }
 
 ul.sidenav li a:hover:not(.active) {
     background-color: #555;
     color: white;
+    width:100%;
+
 }
 
 div.content {
-    margin-left: 15%;
-    padding: 60px 1px 16px 16px;
-    height: 1000px;
+    margin-left: 10%;
+    padding: 16px 10px 16px 16px;
+    height: 40px;
 }
 
 @media screen and (max-width: 1050px){
     ul.sidenav {
         width:100%;
         height:auto;
-        position:relative;
+        position:fixed;
+        top:46px;
+        left:0;
+
+        width:100%;
+      
     }
     ul.sidenav li a {
         float: left;
@@ -63,26 +78,59 @@ div.content {
     }
     div.content {
       margin-left:0;
+      padding: 96px 0px 0px 0px;
     }
 }
-
 @media screen and (max-width: 400px){
     ul.sidenav li a {
         text-align: center;
         float: none;
     }
 }
+/*  CUSTOM  */
+
+
+/*  OTHERS  */
+img { 
+    width:80%; 
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+
+</style>
+<script type="text/javascript">
+
+var menu = document.querySelector('.sidenav');
+var anchors = menu.getElementsByTagName('a');
+
+for (var i = 0; i < anchors.length; i += 1) {
+  anchors[i].addEventListener('click', function() { clickHandler(anchors[i]) }, false);
+}
+
+function clickHandler(anchor) {
+  var hasClass = anchor.getAttribute('class');
+  if (hasClass !== 'active') {
+    anchor.setAttribute('class', 'active');
+  } 
+}
+
+</script>
 
 </head>
 <body>
 
 <ul class="sidenav">
-  <li><a class="active" href="#news">Dashboard</a></li>
+  <li><a class="active" href="/dashboard">Dashboard</a></li>
   <li><a href="/timesheet">TimeSheet</a></li>
-  <li><a href="#about">About ProJet</a></li>
+  <li><a href="#" onclick="alert(
+    'ProJet \n v0.5.1 \n\n' +  
+    labelsBarA + '\n' + labelsBarB + '\n' )">About ProJet</a></li>
 </ul>
 
 <div class="content">
 </div>
 </body>
 </html>
+
