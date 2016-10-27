@@ -99,13 +99,13 @@ class GitEventMapper(object):
 
         eventsColl = PyMongoDB.getEventsColl()
         if eventsColl.find({"repo_name": str(self.gRepo.name)}).count() == 1:
-            print("Eventos já mapeado: ")
+            print("Eventos já mapeados: ")
             
             eventsData = eventsColl.find_one({"repo_name": self.gRepo.name})
 
             evo = eventsData.get('evo')
-            print(eventsColl)
-            print(evo)
+            #print(eventsColl)
+            #print(evo)
             print("Last updated: " + str(eventsData.get('last_update')))
             
         else:
@@ -125,7 +125,7 @@ class GitEventMapper(object):
                     # http://stackoverflow.com/questions/15415709/update-json-file
                     # http://stackoverflow.com/questions/13949637/how-to-update-json-file-with-python
                     # https://docs.python.org/2/tutorial/inputoutput.html
-                    with open('issueMappedDumpJSON.txt', 'w') as outfile:
+                    with open('event_' + str(datetime.now()) + '.txt', 'w') as outfile:
                         json.dump(mappedEvents, outfile)
                 except:
                     print("Erro no arquivo de dump")

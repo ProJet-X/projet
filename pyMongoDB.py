@@ -14,6 +14,7 @@ class PyMongoDB():
         usersColl = ""
         issuesColl = ""
         eventsColl = ""
+        timeSheetsColl = ''
 
         def connectMongo():
 
@@ -22,6 +23,7 @@ class PyMongoDB():
                 global issuesColl
                 global usersColl
                 global eventsColl
+                global timeSheetsColl
 
 
                 print("\n")
@@ -56,6 +58,14 @@ class PyMongoDB():
                                 print(str(result))
                         except:
                                 pass
+                        try:
+                                timeSheetsColl = db.timeSheets
+                                result = timeSheetsColl.create_index([('user', pymongo.TEXT)], unique=True)
+                                print(str(result))
+                        except:
+                                pass
+                        
+
 
                         print("Finished mongoDB configs")
                 except:
@@ -68,9 +78,17 @@ class PyMongoDB():
         def countUsers():
                 global usersColl
                 return usersColl.find().count()
+        
         def countEvents():
                 global eventsColl
                 return eventsColl.find().count()
+              
+        def countTimeSheets():
+                global timeSheetsColl
+                return timeSheetsColl.find().count()
+
+
+        
 
         def getIssuesColl():
                 global issuesColl
@@ -83,6 +101,13 @@ class PyMongoDB():
         def getEventsColl():
                 global eventsColl
                 return eventsColl
+
+        def getTimeSheetsColl():
+                global timeSheetsColl
+                return timeSheetsColl
+
+        
+        
 
         def resetIssuesColl():
                 global issuesColl
@@ -101,3 +126,61 @@ class PyMongoDB():
                 print(str(eventsColl.find().count()))
                 eventsColl.drop()
                 print(str(eventsColl.find().count()))
+                
+        def resetTimeSheetsColl():
+                global timeSheetsColl
+                print(str(timeSheetsColl.find().count()))
+                timeSheetsColl.drop()
+                print(str(timeSheetsColl.find().count()))
+
+
+
+#####################################   INSERT   ######################################
+#######################################################################################
+                        
+        def insertTimeSheetsColl():
+                global timeSheetsColl
+                print("Before: #" + str(timeSheetsColl.find().count()))
+                try :
+                        timeSheet_id = timeSheetsColl.timeSheetsColl.insert_one(timeSheet).inserted_id
+                        print("Usuário adicionado: " + str(timeSheet_id))
+                except :
+                        print("Erro ao adicionar")
+                print("After: #" + (timeSheetsColl.find().count()))
+                
+
+
+####################################   RETRIEVE   #####################################
+#######################################################################################
+                        
+        def retrieveTimeSheetsColl(name):
+                global timeSheetsColl
+                print("Before: #" + str(timeSheetsColl.find().count()))
+                try :
+                        timeSheetData = timeSheetsColl.issuesColl.find_one({"repo_name": name})
+                        return timeSheetData
+                except :
+                        print("Não encontrado")
+                
+
+
+
+
+#####################################   UPDATE   ######################################
+#######################################################################################
+                        
+        def updateTimeSheetsColl():
+                global timeSheetsColl
+
+
+
+
+#####################################   DELETE   ######################################
+#######################################################################################
+                        
+        def deleteTimeSheetsColl():
+                global timeSheetsColl
+      
+
+
+                

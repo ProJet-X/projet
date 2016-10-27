@@ -1,13 +1,16 @@
 import time
 import json
 
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 import operator
 
 from chartFileHelper import ChartFileHelper
 from timeEstimator import Estimator
 from gitMapper import GitMapper
-from gitEventMapper import GitEventMapper 
+from gitEventMapper import GitEventMapper
+from timesheetsRepository import TimesheetsRepository
+from timesheet import Timesheet
+
 
 from pyMongoDB import PyMongoDB 
 from github import Github
@@ -36,6 +39,8 @@ gRepo = ""
 
 graphsURLs = []
 eventGraphsURLs = []
+
+repoLabels = []
 
 # GitHub trace variables
 mapEvents = False
@@ -72,7 +77,12 @@ statusIssuesDevs = {}
 events = []
 evo = []
 
-################################################################# 
+sessionStartTime = 0
+
+syncDays = 6
+
+
+################################################################################################################### 
 #                    GITHUB - MAPPER 
 #################################################################           
 def issueMapper(i):
@@ -96,6 +106,7 @@ def issueMapper(i):
     global statusIssuesDevs
 
     global events
+
     
     MAX_POINTS = 100
 
@@ -330,6 +341,47 @@ def printLog() :
 #                    GITHUB - MAPPER    
 #################################################################
 def repoMapper(gRepo):
+    global repoLabels
+
+    global totalPoints
+    global totalIssues
+    global totalIssuesWithPoints
+    global totalIssuesWithoutPoints
+    global totalPullRequest
+    
+    global sprintsPoints
+    global assigneesPoints
+    global sprintsPointsDevs
+    global statusPoints
+    global statusPointsDevs
+    
+    global sprintsIssues
+    global assigneesIssues
+    global sprintsIssuesDevs
+    global statusIssues
+    global statusIssuesDevs
+
+    global events
+
+
+    totalPoints = 0
+    totalIssues = 0
+    totalIssuesWithPoints = 0
+    totalIssuesWithoutPoints = 0
+    totalPullRequest = 0
+    
+    sprintsPoints = {}
+    assigneesPoints = {}
+    sprintsPointsDevs = {}
+    statusPoints = {}
+    statusPointsDevs = {}
+    
+    sprintsIssues = {}
+    statusIssues = {}
+    assigneesIssues = {}
+    sprintsIssuesDevs = {}
+    statusIssuesDevs = {}
+    events = []
     
     try:
         issueId = ""
@@ -346,6 +398,8 @@ def repoMapper(gRepo):
                 except:
                     print("Last issue")
                     lookup = False
+            for labels in gRepo.get_labels():
+                repoLabels.append({"name" : labels.name, "color": labels.color})        
         else:
             issue = gRepo.get_issue(issueId)
             issueMapper(issue)
@@ -353,9 +407,10 @@ def repoMapper(gRepo):
     except:
         print("Issue não existe")
  
-    
-#################################################################
-#                        PROCESS    
+
+
+###################################################################################################################
+#                        Dashboar data    
 #################################################################
 
 def startMetrics():
@@ -384,15 +439,18 @@ def startMetrics():
     global statusIssuesDevs
 
     global events
+    global repoLabels
+
+    global syncDays
 
     global evo
 
-    metrics = {}
-    try:
-        metrics = GitMapper.startMetrics(gRepo,PyMongoDB)
-    except Exception as e:
-        print("GitMapper error: " + str(e))
-    print(metrics.keys())
+##    metrics = {}
+##    try:
+##        metrics = GitMapper.startMetrics(gRepo,PyMongoDB)
+##    except Exception as e:
+##        print("GitMapper error: " + str(e))
+##    print(metrics.keys())
 
 
     try:
@@ -401,18 +459,17 @@ def startMetrics():
         evo = gEM.getMappedEvents()
     except Exception as e:
         print("GitEventsMapper error: " + str(e))
-    print(evo)
     
     print("\n")
     print("\n")
     print("\n")
     i=0
     print("Colaboradores do repositorio:")
-    for x in gRepo.get_collaborators():
-        print(x.login)
+    #for x in gRepo.get_collaborators():
+    #    print(x.login)
     print("Alocáveis do repositorio:")
-    for x in gRepo.get_assignees():
-        print(x.login)
+    #for x in gRepo.get_assignees():
+    #    print(x.login)
     print("\n")
                
     startTimeMetrics = datetime.now()
@@ -420,7 +477,24 @@ def startMetrics():
     print(startTimeMetrics)
     print("\n")
     issuesColl = PyMongoDB.getIssuesColl()
-    if issuesColl.find({"repo_name": str(gRepo.name)}).count() == 1:
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
+
+    print(sprintsPointsDevs)
+    
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
+    
+
+    lastUpdate = ""
+    outDated = False
+    alreadyMapped = issuesColl.find({"repo_name": str(gRepo.name)}).count() == 1
+    if alreadyMapped:
         print("Existe repo mapeado: ")
         
         issuesData = issuesColl.find_one({"repo_name": gRepo.name})
@@ -442,14 +516,22 @@ def startMetrics():
 
         sprintsPointsDevs = issuesData.get('sprints_points_devs')
         sprintsIssuesDevs = issuesData.get('sprints_issues_devs')
-
+        print(sprintsPointsDevs)
         statusPointsDevs = issuesData.get('status_points_devs')
         statusIssuesDevs = issuesData.get('status_issues_devs')
 
         events = issuesData.get('events')
-        print("Last updated: " + str(issuesData.get('last_update')))
+        repoLabels = issuesData.get('repoLabels')
+
+        lastUpdate = issuesData.get('last_update')
+        print("Last updated: " + str(lastUpdate))
+        outDated = datetime.strptime(lastUpdate, '%Y-%m-%d %H:%M:%S.%f') < datetime.now() - timedelta(days=syncDays)
+        if outDated:
+            print("Passou de" + str(syncDays) + "dias")
+        else:
+            print("Dentro do periodo de atualização")
         
-    else:
+    if not alreadyMapped or outDated:
         print("Iniciando mapeamendo do repo: " + str(gRepo.name))
         try:
             repoMapper(gRepo)
@@ -471,6 +553,7 @@ def startMetrics():
                      'status_points_devs':statusPointsDevs,
                      'status_issues_devs':statusIssuesDevs,
                      'events':events,
+                     'repoLabels':repoLabels,
                      'last_update':str(startTimeMetrics)}
             print(issueMapped.keys())
             issue_id = issuesColl.insert_one(issueMapped).inserted_id
@@ -490,7 +573,9 @@ def startMetrics():
     print(datetime.now() - startTimeMetrics)
     print("\n")
 
-#################################################################
+
+
+###################################################################################################################
 #                        RENDERER - AREA CHART
 #################################################################
 
@@ -500,14 +585,14 @@ def eventChart():
     dataIssues = []
     i = 0
     e = evo.copy()
-    print("A" + str(len(e)))
+    print("#Eventos: " + str(len(e)))
     while i < len(e):
         pointsQA = 0
         issuesQA = 0
         pointsDone = 0
         issuesDone = 0
         d = datetime.strptime(e[i].get('date'), '%Y-%m-%d %H:%M:%S').strftime('%m-%d')
-        print(str(e[i].get('issue')))
+        
 
         if int(e[i].get('status')) == 4:
             issuesQA = issuesQA + 1
@@ -580,6 +665,8 @@ def renderDashboard(org, repo):
     global statusIssues
     global statusIssuesDevs
 
+    global repoLabels
+
     global evo
     
     print(org)
@@ -651,11 +738,23 @@ def renderDashboard(org, repo):
         print(barB)
         if len(value[0]) > 0 and len(value[1]) > 0:
             i = 0
-            for bA in barA:
+            j = 0
+            while j < len(barA) and i < len(barB) :
+                bA = barA[j]
                 bB = barB[i]
-                dataBarChartAssignees.append({ 'y': bA[0],
-                                           'a': bA[1], 'b': bB[1] })
-                i = i+1
+                if bA[0] == bB[0]:
+                    print(str(bA[0]) + " " + str(bB[0]))
+                    dataBarChartAssignees.append({ 'y': bA[0],
+                                               'a': bA[1], 'b': bB[1] })
+                    i = i + 1
+                    j = j + 1
+                elif len(barA) > len(barB):
+                    j = j + 1
+                elif len(barA) < len(barB):
+                    i = i + 1
+                else:
+                    print("Bar chart parity error")
+                
     dataBarChartStatus = []
     barChartsStatus = {'status':[statusIssues, statusPoints]}
     for key, value in barChartsStatus.items():
@@ -665,11 +764,26 @@ def renderDashboard(org, repo):
         print(barB)
         if len(value[0]) > 0 and len(value[1]) > 0:
             i = 0
-            for bA in barA:
+            j = 0
+            while j < len(barA) and i < len(barB) :
+                bA = barA[j]
                 bB = barB[i]
-                dataBarChartStatus.append({ 'y': bA[0],
-                                           'a': bA[1], 'b': bB[1] })
-                i = i+1
+                if bA[0] == bB[0]:
+                    print(str(bA[0]) + " " + str(bB[0]))
+                    dataBarChartStatus.append({ 'y': bA[0],
+                                               'a': bA[1], 'b': bB[1] })
+                    i = i + 1
+                    j = j + 1
+                elif len(barA) > len(barB):
+                    dataBarChartStatus.append({ 'y': bA[0],
+                                               'a': bA[1], 'b': 0 })
+                    j = j + 1
+                elif len(barA) < len(barB):
+                    dataBarChartStatus.append({ 'y': bA[0],
+                                               'a': 0, 'b': bB[1] })
+                    i = i + 1
+                else:
+                    print("Bar chart parity error")
 
     donutSprintsPointsChart = []
     for dSPC in sorted(sprintsPoints.items(), key=operator.itemgetter(0)):
@@ -681,9 +795,12 @@ def renderDashboard(org, repo):
 
     data = eventChart()
 
+    repoLabels = repoLabels
+    
     print("\n")
     print("To render:")
-    print(data)
+    print(repoLabels)
+
     return render_template('dashboard.html', render=True, orgs=orgs,
                            issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
@@ -695,11 +812,109 @@ def renderDashboard(org, repo):
                            labelsBarA=labelsBarA,labelsBarB=labelsBarB,
                            donutSprintsPointsChart=donutSprintsPointsChart,
                            donutSprintsIssuesChart=donutSprintsIssuesChart,
-                           areaQADone=data)
+                           areaQADone=data,
+                           statusIssuesDevs=statusIssuesDevs,
+                           statusPointsDevs=statusPointsDevs,
+                           repoLabels=repoLabels)
 
 
+
+
+######################################################## TIMESHEET CRUD ###########################################################
+#                            LIST
+#################################################################
+
+
+def load_all_items_from_database(repository):
+    print("Loading all items from database:")
+    timesheets = repository.read()
+    at_least_one_item = False
+    for p in timesheets:
+        at_least_one_item = True
+        tmp_timesheet = Timesheet.build_from_json(p)
+        print("ID = {} | User = {} | Date = {}".
+              format(tmp_timesheet._id,tmp_timesheet.user, tmp_timesheet.date))
+    if not at_least_one_item:
+        print("No items in the database")
 
 #################################################################
+#                           CREATE
+#################################################################
+
+def test_create(repository, new_timesheet):
+    print("\n\nSaving new_timesheet to database")
+    repository.create(new_timesheet)
+    print("new_timesheet saved to database")
+    print("Loading new_timesheet from database")
+    db_timesheets = repository.read(timesheet_id=new_timesheet._id)
+    for p in db_timesheets:
+        timesheet_from_db = Timesheet.build_from_json(p)
+        print("new_timesheet = {}".format(timesheet_from_db.get_as_json()))
+
+#################################################################
+#                           UPDATE
+#################################################################
+
+def test_update(repository, new_timesheet):
+    print("\n\nUpdating new_timesheet in database")
+    repository.update(new_timesheet)
+    print("new_timesheet updated in database")
+    print("Reloading new_timesheet from database")
+    db_timesheets = repository.read(timesheet_id=new_timesheet._id)
+    for p in db_timesheets:
+        timesheet_from_db = Timesheet.build_from_json(p)
+        print("new_timesheet = {}".format(timesheet_from_db.get_as_json()))
+
+#################################################################
+#                           DELETE
+#################################################################
+
+def test_delete(repository, timesheet):
+    print("\n\nDeleting timesheet to database")
+    repository.delete(timesheet)
+    print("timesheets deleted from database")
+    print("Trying to reload timesheets from database")
+    db_timesheets = repository.read(timesheet_id=timesheet._id)
+    found = False
+    for p in db_timesheets:
+        found = True
+        timesheet_from_db = Timesheet.build_from_json(p)
+        print("timesheet = {}".format(timesheet_from_db.get_as_json()))
+
+    if not found:
+        print("Item with id = {} was not found in the database".format(timesheet._id))
+
+#################################################################
+#                            LIST
+#################################################################
+
+
+def load_all_items_by_user(repository, user):
+    timesheetsViewModel = []
+    print("Loading all items from database with user key:")
+    timesheets = repository.getByUser(user)
+    at_least_one_item = False
+    for p in timesheets:
+        at_least_one_item = True
+        tmp_timesheet = Timesheet.build_from_json(p)
+        timesheetsViewModel.append({'date':tmp_timesheet.date,
+                                    'project':tmp_timesheet.project,
+                                    'begin':tmp_timesheet.begin,
+                                    'end':tmp_timesheet.end,
+                                    'activity':tmp_timesheet.activity,
+                                    'issue':tmp_timesheet.issue,
+                                    'comment':tmp_timesheet.comment})
+        
+        print("ID = {} | User = {} | Date = {}".format(tmp_timesheet._id,
+                                                       tmp_timesheet.user,
+                                                       tmp_timesheet.date))
+    if not at_least_one_item:
+        print("No items in the database")
+    return timesheetsViewModel
+
+
+
+###################################################################################################################
 #                       PROJET WEB PLAT AUTH
 #################################################################
 
@@ -771,21 +986,75 @@ def dashboard():
 #                      FLASK - WEB PLATFORM
 #################################################################
 
-@app.route('/timesheet')
+@app.route('/timesheet', methods=['GET', 'POST'])
 def timesheet():
-    return render_template('timesheet.html')
-        
+
+    if auth():
+        timesheetsViewModel = []
+        repository = TimesheetsRepository()
+
+        if request.method == 'POST':
+    
+
+            print("TimeSheetPost")
+
+            try:
+                
+                project = request.form['project']
+                begin = request.form['begin']
+                end = request.form['end']
+                activity = request.form['activity']
+                issue = request.form['issue']
+                comment = request.form['comment']
+
+                #create new_timesheet and read back from database
+                new_timesheet = Timesheet.build_from_json({"user":session['username'],
+                                                           "date":datetime.now().strftime("%Y-%m-%d"),
+                                                           "project":project, 
+                                                            "begin":begin,
+                                                            "end":end, 
+                                                            "activity":activity,
+                                                            "issue":issue, 
+                                                            "comment":comment})
+
+                test_create(repository, new_timesheet)
+
             
+                #update new_timesheet and read back from database
+                new_timesheet.begin = 350
+                test_update(repository, new_timesheet)
+
+                #delete new_timesheet and try to read back from database
+                #test_delete(repository, new_timesheet)
+                
+                
+                print("Rendered timesheet!")
+            except:
+                print("Fail!")
+                
+        #display all items from DB
+        load_all_items_from_database(repository)
+
+            
+        dateCalendar = datetime.now().strftime("%Y-%m-%d")
+        timesheetsViewModel = load_all_items_by_user(repository, session['username'])
+        return render_template('timesheet.html',
+                               user = session['username'],
+                               timesheetsViewModel=timesheetsViewModel,
+                               dateCalendar=dateCalendar)
+    else:
+        return redirect(url_for('index'))
+        
 #################################################################
 #                      FLASK - WEB PLATFORM
 #################################################################
 
-@app.route('/test')
+@app.route('/test', methods=['GET', 'POST'])
 def test():
-    return render_template('404.html')
-        
-
-
+    if auth():
+        return render_template('test.html')
+    else:
+        return redirect(url_for('index'))
         
 #################################################################
 #                      FLASK - WEB PLATFORM
@@ -816,10 +1085,12 @@ def login():
             usersColl = PyMongoDB.getUsersColl()
             user_id = usersColl.insert_one(user).inserted_id
             print("Usuário adicionado: " + str(user_id))
+
         except:
             print("Fail!")
             print(datetime.now() - startTimePostLogin)
             return redirect(url_for('index'))
+        
         print(datetime.now() - startTimePostLogin)
         return redirect(url_for('index'))
     return render_template('auth.html')
@@ -828,12 +1099,24 @@ def login():
 #                      FLASK - WEB PLATFORM
 #################################################################
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+       
+#################################################################
+#                      FLASK - WEB PLATFORM
+#################################################################
+
 @app.route('/logout')
 def logout():
-    # remove the username from the session if it's there
-    session.pop('username', None)
-    session.pop('password', None)
-    return redirect(url_for('index'))
+    if auth():
+        # remove the username from the session if it's there
+        session.pop('username', None)
+        session.pop('password', None)
+        return redirect(url_for('index'))
+    else:
+        return redirect(url_for('index'))
 
 #################################################################
 #                      FLASK - WEB PLATFORM

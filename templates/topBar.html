@@ -6,7 +6,6 @@
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +18,7 @@ ul {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  z-index:2;
+  z-index:10000;
   background-color: #333;
 }
 
@@ -28,7 +27,7 @@ ul.fixedOnTop {
   top:0;
   left:0;
   width:100%;
-  z-index:1;
+  z-index:10000;
 }
 
 li {
@@ -81,7 +80,7 @@ li.dropdown {
 
 .dropdown:hover .dropdown-content {
     display: block;
-    z-index:1;
+    z-index:10000;
 }
 
 

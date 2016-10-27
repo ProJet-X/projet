@@ -4,4 +4,6 @@ lineCharts/
 bar*
 node_modules/
 __pycache__/
+*.py[cod]
 issueMappedDumpJSON.txt
+templates/bower_components/

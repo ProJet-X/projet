@@ -3,18 +3,23 @@
 <head>
   <title>Timesheet</title>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
   <!-- CALENDAR -->
-  <link rel='stylesheet' href='fullcalendar/fullcalendar.css' />
-  <script src='lib/jquery.min.js'></script>
-  <script src='lib/moment.min.js'></script>
-  <script src='fullcalendar/fullcalendar.js'></script>
 
-  <script src="https://cdn.rawgit.com/bradberger/angular-material-calendar/master/dist/angular-material-calendar.js"></script>
 
   <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
   <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.css" />
+
+
+  <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.js"></script>
+
 
   <style>
 
@@ -47,7 +52,7 @@
   .dropdown-content {
       display: none;
       position: fixed;
-      background-color: #000000;
+      background-color: #23a988;
       left:auto;
       right:0;
       margin-right:-10px;
@@ -65,7 +70,7 @@
       
   }
 
-  .dropdown-content a:hover {background-color: #000000}
+  .dropdown-content a:hover {background-color: #23a988}
 
   .dropdown:hover .dropdown-content {
       display: block;
@@ -74,28 +79,263 @@
 
   </style>
 
-<script type="text/javascript">
+ <script type="text/javascript">
 
-$(document).ready(function() {
 
-    // page is now ready, initialize the calendar...
+  var days = 0;
 
-    $('#calendar').fullCalendar({
-        // put your options and callbacks here
+// Utils
 
-        $('#calendar').fullCalendar({
-          dayClick: function() {
-          alert('a day has been clicked!');
+  Date.prototype.yyyymmdd = function() {
+        var mm = this.getMonth() + 1; // getMonth() is zero-based
+        var dd = this.getDate();
+
+        return [this.getFullYear(), !mm[1] && '-', mm, !dd[1] && '-', dd].join(''); // padding
+      };
+
+
+ Date.prototype.addDays = function(days)
+      {
+          var d = new Date(this.valueOf());
+          d.setDate(d.getDate() + days);
+          return d;
+      }
+
+
+// http://stackoverflow.com/questions/3387427/remove-element-by-id
+  Element.prototype.remove = function() {
+      this.parentElement.removeChild(this);
+  }
+  NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+      for(var i = this.length - 1; i >= 0; i--) {
+          if(this[i] && this[i].parentElement) {
+              this[i].parentElement.removeChild(this[i]);
+          }
+      }
+  }
+
+//
+
+  function addRow() {
+            
+      var project = document.getElementById("project");
+      var begin = document.getElementById("begin");
+      var end = document.getElementById("end");
+      var total = "total";
+      var activity = document.getElementById("activity");
+      var issue = document.getElementById("issue");
+      var comment = document.getElementById("comment");
+      var table = document.getElementById("myTableData");
+   
+      var rowCount = table.rows.length;
+      var row = table.insertRow(rowCount);
+   
+      row.insertCell(0).innerHTML= project.value;
+      row.insertCell(1).innerHTML= begin.value;
+      row.insertCell(2).innerHTML= end.value;
+      row.insertCell(3).innerHTML= total.value;
+      row.insertCell(4).innerHTML= activity.value;
+      row.insertCell(5).innerHTML= issue.value;
+      row.insertCell(6).innerHTML= '<input type="text" class="form-control" id="projectEditComment" placeholder="comment" value=comment.value>';
+      row.insertCell(7).innerHTML= '<input type="button" value = "Edit" onClick="Javacsript:editRow(this)">';
+      row.insertCell(8).innerHTML= '<input type="button" value = "Delete" onClick="Javacsript:deleteRow(this)">';
+
+   
+  }
+   
+  function deleteRow(obj) {
+        
+      var index = obj.parentNode.parentNode.rowIndex;
+      var table = document.getElementById("myTableData");
+      table.deleteRow(index);
+      
+  }
+   
+  function editRow(obj) {
+        
+      var index = obj.parentNode.parentNode.rowIndex;
+      var table = document.getElementById("myTableData");
+      table.deleteRow(index);
+      
+  }
+
+  function resetTable() {
+    console.log("Reset tables")
+    var tables = document.getElementsByTagName("TABLE");
+    for (var i=tables.length-1; i>=0;i-=1)
+       if (tables[i]) tables[i].parentNode.removeChild(tables[i]);
+  }
+   
+  function addTableRaw() {
+      var myTableDiv = document.getElementById("myDynamicTable");
+        
+      var table = document.createElement('TABLE');
+      table.border='1';
+      
+      var tableBody = document.createElement('TBODY');
+      table.appendChild(tableBody);
+        
+      for (var i=0; i<3; i++){
+         var tr = document.createElement('TR');
+         tableBody.appendChild(tr);
+         
+         for (var j=0; j<4; j++){
+             var td = document.createElement('TD');
+             td.width='75';
+             td.appendChild(document.createTextNode("Cell " + i + "," + j));
+             tr.appendChild(td);
+         }
+      }
+      myTableDiv.appendChild(table);
+      
+  }
+
+  function addTable(timesheetUserDate) {
+
+      resetTable(); 
+
+      console.log("Will add a table");
+    
+      var myTableDiv = document.getElementById("myDynamicTable");
+
+      var table = document.createElement('TABLE');
+      table.border='1';
+      
+      var tableBody = document.createElement('TBODY');
+      table.appendChild(tableBody);
+        
+      for (i in timesheetUserDate){
+         var tr = document.createElement('TR');
+         tableBody.appendChild(tr);
+
+         var th = document.createElement('TH');
+         th.width='95';
+         th.appendChild(document.createTextNode(i));
+         tr.appendChild(th);
+
+         var totalIssues = 0;
+         for (j in timesheetUserDate[i]){
+             var td = document.createElement('TD');
+             td.width='75';
+             td.appendChild(document.createTextNode(j + ":" + timesheetUserDate[i][j]));
+             tr.appendChild(td);
+             totalIssues = totalIssues + timesheetUserDate[i][j];
+         }
+
+         var tht = document.createElement('TH');
+         tht.width='55';
+         tht.appendChild(document.createTextNode("Total: " + totalIssues));
+         tr.appendChild(tht);
+
+      }
+      myTableDiv.appendChild(table);
+
+
+      var br = document.createElement("br");
+      myTableDiv.appendChild(br);
+
+
+  }
+
+  function loadTimsheetTable() {
+    var timesheetsUserDateToShow = retrieveTimesheetByDay(days)
+    if (timesheetsUserDateToShow != null) {
+      addTable(timesheetsUserDateToShow)
     }
-});
-    })
+  }
 
-});
+  function retrieveTimesheetByDay(days) {
+    console.log("days")
+    console.log(days)
+
+    var timesheetsUser = JSON.parse('{{timesheetsViewModel|tojson|safe}}');
+  console.log("timesheetsUser");
+  console.log(timesheetsUser);
+
+
+      var date = new Date();
+  console.log("date.yyyymmdd()");
+  console.log(date.yyyymmdd());
+
+
+      var daysToMove = days
+      var dat = new Date();
+
+      var dateToShow = dat.addDays(daysToMove).yyyymmdd()
+  console.log("dateToShow");
+  console.log(dateToShow);
+
+
+      var timesheetUserDate = timesheetsUser.filter(function( obj ) {
+          return obj.date == dateToShow;
+      });
+  console.log("timesheetUserDate");   
+  console.log(timesheetUserDate);   
+
+
+  // Filter
+  //http://stackoverflow.com/questions/10123953/sort-javascript-object-array-by-date
+  // (function(){
+  //       if (typeof Object.defineProperty === 'function'){
+  //         try{Object.defineProperty(Array.prototype,'sortBy',{value:sb}); }catch(e){}
+  //       }
+  //       if (!Array.prototype.sortBy) Array.prototype.sortBy = sb;
+
+  //       function sb(f){
+  //         for (var i=this.length;i;){
+  //           var o = this[--i];
+  //           this[i] = [].concat(f.call(o,o,i),o);
+  //         }
+  //         this.sort(function(a,b){
+  //           for (var i=0,len=a.length;i<len;++i){
+  //             if (a[i]!=b[i]) return a[i]<b[i]?-1:1;
+  //           }
+  //           return 0;
+  //         });
+  //         for (var i=this.length;i;){
+  //           this[--i]=this[i][this[i].length-1];
+  //         }
+  //         return this;
+  //       }
+  //     })();
+
+  //     var sortedTimesheets = timesheetsUser.sortBy(
+  //       function(o){
+  //        return new Date(o.date) 
+  //       });
+  // console.log(sortedTimesheets)
+
+  return timesheetUserDate;
+
+  }
+
+   
+  function previousDay() {
+    days = days - 1
+    // document.getElementById("myDynamicTable").remove();
+    loadTimsheetTable() 
+  }
+
+   
+  function nextDay() {
+    days = days + 1
+    // document.getElementById("myDynamicTable").remove();
+    loadTimsheetTable() 
+  }
+
+   
+  function load() {
+
+      console.log("Page load finished");
+   
+  }
 
 </script>
 
 </head>
-<body>
+
+<body onload="load()">
+<p id="demo"></p>
 
 {% include "topBar.html" %}
 
@@ -104,36 +344,69 @@ $(document).ready(function() {
 
 <div class="content">
 
-<form class="row form-inline">
-  <div class="form-group col-sm-2 col-xs-6">
-    <input type="text" class="form-control" id="exampleInputName2" placeholder="Name">
-  </div>
-  <div class="form-group col-sm-2 col-xs-6">
-    <input type="email" class="form-control" id="exampleInputEmail2" placeholder="Email">
-  </div>
-  <div class="form-group col-sm-2 col-xs-6">
-    <input type="email" class="form-control" id="exampleInputEmail2" placeholder="Email">
-  </div>
-  <li class="dropdown">
-    <a href="#" class="dropbtn">Conta</a>
-    <div class="dropdown-content">
-      <a href="/auth">Login com outra conta</a>
-      <a href="/logout" target="_top">LogOut</a>
+  <h1>Olá, {{user}}!</h1>
+  <h2>Timesheet</h2>
+
+  <br>
+
+  <form id="myform" class="row form-inline  container-fluid" method="post">
+    <div class="form-group col-sm-2 col-xs-6">
+      <b>Project</b>
+      <input type="text" class="form-control" id="project" name="project" placeholder="Project">
     </div>
-  </li>
 
-  <div class="checkbox form-group col-sm-2 col-xs-6">
-    <label class="custom-checkbox">
-      <input type="checkbox">
-      <span>Remember me</span>
-    </label>
+    <div class="form-group col-sm-2 col-xs-6">
+      <b>Begin</b>
+      <input type="text" class="form-control" id="begin" name="begin" placeholder="Begin">
+    </div>
+    <div class="form-group col-sm-2 col-xs-6">
+      <b>End</b>
+      <input type="text" class="form-control" id="end" name="end" placeholder="End">
+    </div>
+
+    <div class="form-group col-sm-2 col-xs-6">
+      <b>Activity</b>
+      <input type="text" class="form-control" id="activity"  name="activity" placeholder="Activity">
+    </div>
+    <div class="form-group col-sm-2 col-xs-6">
+      <b>Issue</b>
+      <input type="text" class="form-control" id="issue" name="issue" placeholder="Issue">
+    </div>
+    <div class="form-group col-sm-2 col-xs-6">
+      <b>Comment</b>
+      <input type="text" class="form-control" id="comment" name="comment" placeholder="Comment">
+    </div>
+
+    <div class="form-group col-sm-2 col-xs-6">
+     <b>Add activity</b>
+      <input type="submit" id="add" class="btn btn-primary" onclick="Javascript:addRow()" value="Add" >
+    </div>
+
+  </form>
+
+  <br>
+    <div class="form-group align="left" col-sm-2 col-xs-2">
+      <input type="button"  id="previousDay" class="btn btn-primary" onclick="Javascript:previousDay()" value="<<" >
+    </div>
+    <div align="center" class="form-group col-sm-8 col-xs-8">
+      <h3>Apontamentos</h3>
+    </div>
+    <div class="form-group align="right" col-sm-2 col-xs-2">
+      <input type="button" id="nextDate" class="btn btn-primary" onclick="Javascript:nextDay()" value=">>" >
+    </div>
+  <br>
+
+  <h2>Apontamentos</h2>
+  <div id="myDynamicTable">
+    <script type="text/javascript">
+        document.getElementById("demo").innerHTML = loadTimsheetTable();
+    </script>
+
   </div>
-  <button type="submit" class="btn btn-primary form-group col-sm-2 col-xs-6">Send invitation</button>
-</form>
-
-<div id='calendar'></div>
 
 </div>
+
+
 
 </body>
 </html>

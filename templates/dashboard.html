@@ -1,10 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
+<title>ProJet Dashboard</title>
 
-<style>
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-</style>
+  <!-- CALENDAR -->
+
+
+  <!-- Latest compiled and minified CSS -->
+
+  <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
 
 {% include "topBar.html" %}
 {% include "sideBar.html" %}
@@ -30,13 +40,99 @@
       selectList.appendChild(option);
   }
 }
+
+
+
+
+
+function addTable() {
+      
+    var myTableDiv = document.getElementById("myDynamicTable");
+    
+    var statusIssuesDevs = JSON.parse('{{statusIssuesDevs|tojson|safe}}');
+    var statusPointsDevs = JSON.parse('{{statusPointsDevs|tojson|safe}}');
+
+    var table = document.createElement('TABLE');
+    table.border='1';
+    
+    var tableBody = document.createElement('TBODY');
+    table.appendChild(tableBody);
+      
+    for (i in statusIssuesDevs){
+       var tr = document.createElement('TR');
+       tableBody.appendChild(tr);
+
+       var th = document.createElement('TH');
+       th.width='95';
+       th.appendChild(document.createTextNode(i));
+       tr.appendChild(th);
+
+       var totalIssues = 0;
+       for (j in statusIssuesDevs[i]){
+           var td = document.createElement('TD');
+           td.width='75';
+           td.appendChild(document.createTextNode(j + ":" + statusIssuesDevs[i][j]));
+           tr.appendChild(td);
+           totalIssues = totalIssues + statusIssuesDevs[i][j];
+       }
+
+       var tht = document.createElement('TH');
+       tht.width='55';
+       tht.appendChild(document.createTextNode("Total: " + totalIssues));
+       tr.appendChild(tht);
+
+    }
+    myTableDiv.appendChild(table);
+
+
+    var br = document.createElement("br");
+    myTableDiv.appendChild(br);
+
+    var pointHeader = document.createElement("h2");
+    myTableDiv.appendChild(pointHeader);
+
+
+    var table2 = document.createElement('TABLE');
+    table2.border='1';
+    
+    var tableBody2 = document.createElement('TBODY');
+    table2.appendChild(tableBody2);
+      
+    for (i in statusPointsDevs){
+       var tr2 = document.createElement('TR');
+       tableBody2.appendChild(tr2);
+
+       var th2 = document.createElement('TH');
+       th2.width='95';
+       th2.appendChild(document.createTextNode(i));
+       tr2.appendChild(th2);
+ 
+       var totalIssues2 = 0;
+       for (j in statusPointsDevs[i]){
+           var td2 = document.createElement('TD');
+           td2.width='75';
+           td2.appendChild(document.createTextNode(j + ":" + statusPointsDevs[i][j]));
+           tr2.appendChild(td2);
+           totalIssues2 = totalIssues2 + statusIssuesDevs[i][j];
+       }
+
+       var tht2 = document.createElement('TH');
+       tht2.width='95';
+       tht2.appendChild(document.createTextNode("Total: " + totalIssues2));
+       tr2.appendChild(tht2);
+    }
+    myTableDiv.appendChild(table2);
+
+    
+}
+
 </script>
 
 </head>
 <body>
-<title>ProJet Dashboard</title>
 
-<div class="content">
+<p id="dashboard"></p>
+<div class="content container-fluid">
 <form action="" method="post">
   <fieldset>
     <legend>ProJet</legend>
@@ -98,11 +194,11 @@
   <div class="container">
     <div class="row">
         <div class="col-md-6">
-           <li align="middle">Pontos e Issues por dev</li>
+           <li align="middle"><h3>Dev</h3></li>
             <div id="bar-chart-assignees" ></div>
         </div>
         <div class="col-md-6">
-          <li align="middle" >Pontos e Issues por sprint</li>
+          <li align="middle" ><h2>Sprint</h2></li>
             <div id="bar-chart-status" ></div>
         </div>
     </div>
@@ -138,33 +234,22 @@
   <img src={{ charts[9] }} alt="ChartJ" align="middle"> -->
 
 
-  <h2>Resumo dev time</h2>
-  <table>
-  <tr>
-  <th>  Devs  </th>
-  <th>  IDs  </th>
-  <th>  Pontos  </th>
-  <th>  Criada  </th>
-  <th>  Em desenvolvimento  </th>
-  <th>  Terminada  </th>
-  
-  </tr>
-  <tr>
-  <td>  {{devs}} </td>
-  <td>  {{taskID}} </td>
-  <td>  {{taskPoints}} </td>
-  <td>  {{created_at}} </td>
-  <td>  {{working}} </td>
-  <td>  {{done}} </td>
-  </tr>
-  </table>
+  <h2>Tags/Labels</h2>
+  <h2>Issues</h2>
+<div id="myDynamicTable">
+  <script type="text/javascript">
+      document.getElementById("demo").innerHTML = addTable();
+  </script>
+
+</div>
+
 {% else %}
   <h1>Ops!</h1>
   <p>Please <a href="/login" target="_top">try again</a></p>
   <p>If persists, try <a href="/logout" target="_top">later</a></p>
 {% endif %}
 </div>
-
+<br><br>
 <script type="text/javascript">
 
 
