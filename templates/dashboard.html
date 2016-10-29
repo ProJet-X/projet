@@ -133,27 +133,33 @@ function addTable() {
 
 <p id="dashboard"></p>
 <div class="content container-fluid">
-<form action="" method="post">
-  <fieldset>
-    <legend>ProJet</legend>
-    Org:<br>
-    <input type="text" name="org" id="org" placeholder="org" value="TesteProGest" autofocus>
-    <br>
-    Repo:<br>
-    <input type="text" name="repo" value="progest" placeholder="repo">
-    <br><br>
-    <input type="checkbox" name="locally">Download chart image<br>
-    <br><br>
+<form id="myform" class="row form-inline  container-fluid" method="post">
+  <fieldset>  
+    <legend>ProJet  - {{org}}/{{repo}}</legend>
+    <div class="form-group col-sm-4 col-xs-4">
+    <b>Organização:</b>
+      <input type="text" class="form-control" id="org" name="org" placeholder="org" value="TesteProGest" autofocus="">
+    </div>
 
-    <input type="submit" value="Projet"><br>
-    <br>
-    <!-- <div id="myDivOrgs" align="middle">Orgs</div>
-    <div id="myDivRepos" align="right">Repos {{orgs}}</div> -->
+    <div class="form-group col-sm-4 col-xs-4">
+      <b>Repositório</b>
+      <input type="text" class="form-control" name="repo" value="progest" placeholder="repo">
+    </div>
+      <div class="form-group col-sm-2 col-xs-2">
+      <input type="checkbox" name="locally">Download chart image<br> 
+    </div>
+     
+      <div class="form-group col-sm-2 col-xs-2">
+      <input type="submit" id="go" class="btn btn-success" value="ProJet">
+     </div>
   </fieldset>
+ 
+ <br><br>    
+  
 </form>
 {% if render %}
-  <h1>DashBoard - {{org}}/{{repo}}</h1>
-  <h2>Indicadores gerais</h2>
+  <legend>Indicadores gerais</legend>
+  <fieldset>
   <table>
   <tr>
   <th>  Issues  </th>
@@ -174,8 +180,6 @@ function addTable() {
   </table>
   
 
- 
-  <h2>Gráficos</h2>
   <div class="container">
     <div class="row">
         <div class="col-md-6">
@@ -235,7 +239,7 @@ function addTable() {
 
 
   <h2>Tags/Labels</h2>
-  <h2>Issues</h2>
+
 <div id="myDynamicTable">
   <script type="text/javascript">
       document.getElementById("demo").innerHTML = addTable();
@@ -248,6 +252,7 @@ function addTable() {
   <p>Please <a href="/login" target="_top">try again</a></p>
   <p>If persists, try <a href="/logout" target="_top">later</a></p>
 {% endif %}
+</fieldset>
 </div>
 <br><br>
 <script type="text/javascript">
@@ -269,12 +274,14 @@ var dataDonutIssuesChart = JSON.parse('{{donutSprintsIssuesChart|tojson|safe}}')
 */
 Morris.Donut({
   element: 'donut-points-sprints',
-  data: dataDonutPointsChart
+  data: dataDonutPointsChart,
+  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
 });
 
 Morris.Donut({
   element: 'donut-issues-sprints',
-  data: dataDonutIssuesChart
+  data: dataDonutIssuesChart,
+  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
 });
 
 
@@ -293,7 +300,16 @@ Morris.Bar({
   data: dataBarChartAssignees ,
   xkey: 'y',
   ykeys: ['a', 'b'],
-  labels: [labelsBarA, labelsBarB]
+  labels: [labelsBarA, labelsBarB],
+  barColors: function (row, series, type) {
+    if (type === 'bar') {
+      var red = Math.ceil(255 * row.y / this.ymax);
+      return 'rgb(' + red + ',0,0)';
+    }
+    else {
+      return '#000';
+    }
+  }
 
 });
 
@@ -302,9 +318,22 @@ Morris.Bar({
   data: dataBarChartStatus ,
   xkey: 'y',
   ykeys: ['a', 'b'],
-  labels: [labelsBarA, labelsBarB]
-
+  labels: [labelsBarA, labelsBarB],
+  barColors: function(row, series, type) {
+  if(series.key == 'b')
+  {
+    if(row.y < 70)
+      return "red";
+    else
+      return "blue";  
+  }
+  else
+  {
+    return "green";
+  }
+}
 });
+
 
 
 
@@ -327,7 +356,8 @@ new Morris.Line({
   // Labels for the ykeys -- will be displayed when you hover over the
   // chart.
   labels:
-   ['Value']
+   ['Value'],
+  lineColors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
 });
 
 /*
@@ -357,7 +387,6 @@ Morris.Area({
   xkey: 'y',
   ykeys: ['a', 'b'],
   labels: [labelsBarA, labelsBarB]
-
 });
 
 </script>

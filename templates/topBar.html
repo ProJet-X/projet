@@ -11,6 +11,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
+
+/*CORES*/
+
+/*
+
+333
+23a988
+f9f9f9
+rgba(0,0,0,0.2)
+f1f1f1
+
+*/
+
 /*FIX TOP MENU*/
 
 ul {
@@ -20,6 +34,9 @@ ul {
   overflow: hidden;
   z-index:10000;
   background-color: #333;
+  border-bottom: 1px solid #23a988;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
 }
 
 ul.fixedOnTop {
@@ -34,18 +51,40 @@ li {
   float: left;
 }
 
+li a:hover {
+  color: white;
+  text-decoration: none;
+  font-size: 102%;
+}
+
+li a:visited {
+    color: #23a988;
+    text-decoration: none;
+}
+
+li a:active {
+    color: #23a988;
+    text-decoration: none;
+}
+
 li a, .dropbtn {
   display: inline-block;
   color: white;
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
-  
 }
 
-li a:hover, .dropdown:hover .dropbtn {
-    background-color: #23a988;
-    
+.brand:hover {
+  color: white
+}
+
+ .dropdown:hover .dropbtn {
+  color: #f1f1f1
+}
+
+li a:hover{
+  background-color: #24746c
 }
 
 li.dropdown {
@@ -56,6 +95,7 @@ li.dropdown {
 }
 
 .dropdown-content {
+    color: #23a988;
     display: none;
     position: fixed;
     background-color: #f9f9f9;
@@ -76,7 +116,11 @@ li.dropdown {
     
 }
 
-.dropdown-content a:hover {background-color: #f1f1f1}
+.dropdown-content a:hover {
+  color: #23a988;
+  font-size: 100%;
+  background-color: #f0f0f0
+}
 
 .dropdown:hover .dropdown-content {
     display: block;
@@ -84,19 +128,40 @@ li.dropdown {
 }
 
 
+/* FORMS */
+  textarea:focus,
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  input[type="datetime"]:focus,
+  input[type="datetime-local"]:focus,
+  input[type="date"]:focus,
+  input[type="month"]:focus,
+  input[type="time"]:focus,
+  input[type="week"]:focus,
+  input[type="number"]:focus,
+  input[type="email"]:focus,
+  input[type="url"]:focus,
+  input[type="search"]:focus,
+  input[type="tel"]:focus,
+  input[type="color"]:focus,
+  .uneditable-input:focus {   
+  border-color: rgba(126, 239, 104, 0.8);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(126, 239, 104, 0.6);
+  outline: 0 none;
+}
 </style>
 
 </head>
 <body>
 
 <ul class="fixedOnTop">
-  <li><a class="active" href="/">ProJet</a></li>
-  
+  <li><a class="brand" href="/">ProJet</a></li>
+  <li>Olá, {{user}}!</li>
   <li align="right"  class="dropdown">
     <a href="#" class="dropbtn">Conta</a>
     <div class="dropdown-content">
-      <a href="/auth">Login com outra conta</a>
-      <a href="/logout" target="_top">LogOut</a>
+      <a href="/auth">Trocar de conta</a>
+      <a href="/logout" target="_top">Sair</a>
     </div>
   </li>
 </ul>

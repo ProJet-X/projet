@@ -801,7 +801,8 @@ def renderDashboard(org, repo):
     print("To render:")
     print(repoLabels)
 
-    return render_template('dashboard.html', render=True, orgs=orgs,
+    return render_template('dashboard.html', user=session['username'],
+                           render=True, orgs=orgs,
                            issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
                            charts=charts,

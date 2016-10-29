@@ -2,6 +2,14 @@
 <html>
 <head>
   <title>Timesheet</title>
+
+
+  {% include "topBar.html" %}
+
+  {% include "sideBar.html" %}
+
+  
+
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -14,70 +22,6 @@
   <!-- Latest compiled and minified CSS -->
 
   <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
-
-  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.css" />
-
-
-  <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.js"></script>
-
-
-  <style>
-
-/*DROPDOWN MENU*/
-  li {
-    float: left;
-  }
-
-  li a, .dropbtn {
-    display: inline-block;
-    color: black;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-    
-  }
-
-  li a:hover, .dropdown:hover .dropbtn {
-      background-color: #23a988;
-      
-  }
-
-  li.dropdown {
-      display: inline-block;
-      float: right;
-      margin-right: 15dp;
-      
-  }
-
-  .dropdown-content {
-      display: none;
-      position: fixed;
-      background-color: #23a988;
-      left:auto;
-      right:0;
-      margin-right:-10px;
-      min-width: 100px;
-      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-      
-  }
-
-  .dropdown-content a {
-      color: black;
-      padding: 12px 16px;
-      text-decoration: none;
-      display: block;
-      text-align: left;
-      
-  }
-
-  .dropdown-content a:hover {background-color: #23a988}
-
-  .dropdown:hover .dropdown-content {
-      display: block;
-      z-index:1;
-  }
-
-  </style>
 
  <script type="text/javascript">
 
@@ -335,37 +279,27 @@
 </head>
 
 <body onload="load()">
-<p id="demo"></p>
-
-{% include "topBar.html" %}
-
-{% include "sideBar.html" %}
-
-
-<div class="content">
-
-  <h1>Olá, {{user}}!</h1>
-  <h2>Timesheet</h2>
-
-  <br>
+<div class="content container-fluid">
+<fieldset>  
+    <legend>Timesheet</legend>
 
   <form id="myform" class="row form-inline  container-fluid" method="post">
     <div class="form-group col-sm-2 col-xs-6">
-      <b>Project</b>
+      <b>Projeto</b>
       <input type="text" class="form-control" id="project" name="project" placeholder="Project">
     </div>
 
     <div class="form-group col-sm-2 col-xs-6">
-      <b>Begin</b>
+      <b>Começo</b>
       <input type="text" class="form-control" id="begin" name="begin" placeholder="Begin">
     </div>
     <div class="form-group col-sm-2 col-xs-6">
-      <b>End</b>
+      <b>Fim</b>
       <input type="text" class="form-control" id="end" name="end" placeholder="End">
     </div>
 
     <div class="form-group col-sm-2 col-xs-6">
-      <b>Activity</b>
+      <b>Atividade</b>
       <input type="text" class="form-control" id="activity"  name="activity" placeholder="Activity">
     </div>
     <div class="form-group col-sm-2 col-xs-6">
@@ -373,36 +307,36 @@
       <input type="text" class="form-control" id="issue" name="issue" placeholder="Issue">
     </div>
     <div class="form-group col-sm-2 col-xs-6">
-      <b>Comment</b>
+      <b>Comentario</b>
       <input type="text" class="form-control" id="comment" name="comment" placeholder="Comment">
     </div>
-
-    <div class="form-group col-sm-2 col-xs-6">
-     <b>Add activity</b>
-      <input type="submit" id="add" class="btn btn-primary" onclick="Javascript:addRow()" value="Add" >
+    
+      <br><br>
+      <br><br>
+    <div class="form-group col-sm-12 col-xs-6" align="center">
+      <input type="submit" id="add" class="btn btn-success" onclick="Javascript:addRow()" value="Adicionar" >
     </div>
 
   </form>
-
-  <br>
-    <div class="form-group align="left" col-sm-2 col-xs-2">
-      <input type="button"  id="previousDay" class="btn btn-primary" onclick="Javascript:previousDay()" value="<<" >
+</fieldset>  
+  <br>  
+    <div class="form-group col-sm-2 col-xs-2" align="left" >
+      <input type="button"  id="previousDay" class="btn btn-success" onclick="Javascript:previousDay()" value="<<" >
     </div>
     <div align="center" class="form-group col-sm-8 col-xs-8">
       <h3>Apontamentos</h3>
     </div>
-    <div class="form-group align="right" col-sm-2 col-xs-2">
-      <input type="button" id="nextDate" class="btn btn-primary" onclick="Javascript:nextDay()" value=">>" >
+    <div class="form-group col-sm-2 col-xs-2" align="right">
+      <input type="button" id="nextDate" class="btn btn-success" onclick="Javascript:nextDay()" value=">>" >
     </div>
-  <br>
 
-  <h2>Apontamentos</h2>
   <div id="myDynamicTable">
     <script type="text/javascript">
         document.getElementById("demo").innerHTML = loadTimsheetTable();
     </script>
 
   </div>
+<p id="demo"></p>
 
 </div>
 

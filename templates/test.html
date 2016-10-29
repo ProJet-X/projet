@@ -2,112 +2,83 @@
 <html>
 <head runat="server">
     <title>Test Zone</title>
-    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.css" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js">
-    </script>
+ 
 
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-    <!-- ... -->
-    <script type="text/javascript" src="C:/Users/vinic/Projects/projet/modules/bower_components/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="C:/Users/vinic/Projects/projet/modules/bower_components/moment/min/moment.min.js"></script>
-    <script type="text/javascript" src="C:/Users/vinic/Projects/projet/modules/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="C:/Users/vinic/Projects/projet/modules/bower_components/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
-    <link rel="stylesheet" href="C:/Users/vinic/Projects/projet/modules/bower_components/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="C:/Users/vinic/Projects/projet/modules/bower_components/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css" />
-
-    <link rel='stylesheet' href='C:/Users/vinic/Projects/projet/fullcalendar/fullcalendar.css' />
-    <script src='C:/Users/vinic/Projects/projet/fullcalendar/fullcalendar.js'></script>
-
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#pickyDate').datepicker({
-                format: "dd/mm/yyyy"
-            });
-        });
+  <!-- CALENDAR -->
 
 
-        
-    </script>
+  <!-- Latest compiled and minified CSS -->
+
+  <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
 
 </head>
 
 <body>
-    <div id="testDIV">
-        <div class="container">
-            <div class="hero-unit">
-                <input type="text" placeholder="click to show datepicker" id="pickyDate" />
-            </div>
+    <div class="widgets">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div ba-panel ba-panel-title="Editable Rows" ba-panel-class="with-scroll">
+            <div class="add-row-editable-table">
+  <button class="btn btn-primary" ng-click="addUser()">Add row</button>
+</div>
+<table class="table table-bordered table-hover table-condensed">
+  <tr>
+    <td></td>
+    <td>Name</td>
+    <td>Status</td>
+    <td>Group</td>
+    <td>Actions</td>
+  </tr>
+  <tr ng-repeat="user in users" class="editable-row">
+    <td>
+        {{$index}}
+    </td>
+    <td>
+        <span editable-text="user.name" e-name="name" e-form="rowform" e-required>
+          {{ user.name || 'empty' }}
+        </span>
+    </td>
+    <td class="select-td">
+        <span editable-select="user.status" e-name="status" e-form="rowform" e-selectpicker
+              e-ng-options="s.value as s.text for s in statuses">
+          {{ showStatus(user) }}
+        </span>
+    </td>
+    <td class="select-td">
+        <span editable-select="user.group" e-name="group" onshow="loadGroups()" e-form="rowform" e-selectpicker
+              e-ng-options="g.id as g.text for g in groups">
+          {{ showGroup(user) }}
+        </span>
+    </td>
+    <td>
+      <form editable-form name="rowform" ng-show="rowform.$visible" class="form-buttons form-inline"
+            shown="inserted == user">
+        <button type="submit" ng-disabled="rowform.$waiting" class="btn btn-primary editable-table-button btn-xs">
+          Save
+        </button>
+        <button type="button" ng-disabled="rowform.$waiting" ng-click="rowform.$cancel()" class="btn btn-default editable-table-button btn-xs">
+          Cancel
+        </button>
+      </form>
+      <div class="buttons" ng-show="!rowform.$visible">
+        <button class="btn btn-primary editable-table-button btn-xs" ng-click="rowform.$show()">Edit</button>
+        <button class="btn btn-danger editable-table-button btn-xs" ng-click="removeUser($index)">Delete</button>
+      </div>
+    </td>
+  </tr>
+</table>
+
+          </div>
         </div>
-    <div class='col-md-5'>
-        <div class="form-group">
-            <div class='input-group date' id='datetimepicker6'>
-                <input type='text' class="form-control" />
-                <span class="input-group-addon">
-                    <span class="glyphicon glyphicon-calendar"></span>
-                </span>
-            </div>
-        </div>
+      </div>
     </div>
-    <div class='col-md-5'>
-        <div class="form-group">
-            <div class='input-group date' id='datetimepicker7'>
-                <input type='text' class="form-control" />
-                <span class="input-group-addon">
-                    <span class="glyphicon glyphicon-calendar"></span>
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <div id='calendar1'></div>
-
-    <a href="#myModal" role="button" class="btn btn-default" data-toggle="modal">Launch demo modal</a>
-
-    <div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-    <div class="modal-content">
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                <h3 id="myModalLabel">Modal header</h3>
-        </div>
-        <div class="modal-body">
-            <div class="row">
-                <div class="col-xs-6">
-                    <div id="calendar"></div>
-                </div>
-                
-            </div>
-            
-        </div>
-        <div class="modal-footer">
-            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-            <button class="btn btn-primary">Save changes</button>
-        </div>
-    </div>
-    </div>
-        
-    </div>
-
-<script type="text/javascript">
-
-$(document).ready(function () {
-            $('#datetimepicker6').datepicker();
-            $('#datetimepicker7').datetimepicker({
-            // useCurrent: false //Important! See issue #1075
-            });
-            // $("#datetimepicker6").on("dp.change", function (e) {
-            //     $('#datetimepicker7').data("DateTimePicker").minDate(e.date);
-            // });
-            // $("#datetimepicker7").on("dp.change", function (e) {
-            //     $('#datetimepicker6').data("DateTimePicker").maxDate(e.date);
-            // });
-
-        });
-
-</script>
 </body>
 
 </html>
