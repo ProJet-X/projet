@@ -5,11 +5,12 @@ from datetime import datetime, date, time, timedelta
 import operator
 
 from chartFileHelper import ChartFileHelper
-from timeEstimator import Estimator
+##from timeEstimator import Estimator
 from gitMapper import GitMapper
 from gitEventMapper import GitEventMapper
 from timesheetsRepository import TimesheetsRepository
 from timesheet import Timesheet
+from timeGit import TimeGit
 
 
 from pyMongoDB import PyMongoDB 
@@ -184,7 +185,7 @@ def issueMapper(i):
                         statusPointsDevs[status].update({developer: pt})
                 else:
                     statusPointsDevs[status] = {developer: pt}
-        except:
+        except Exception as e:
             print("Problema nos pontos da issue #" + str(i.number) + " " + str(i.title))
             print("!_________________________!_________________________!")
     else:
@@ -229,11 +230,16 @@ def issueMapper(i):
             if list(statusIssuesDevs.keys()).count(status) == 1:
                 if list(statusIssuesDevs[status].keys()).count(developer) == 1:
                     statusIssuesDevs[status][developer] = statusIssuesDevs[status][developer] + 1
+##                    statusIssuesSprintDevs[status][developer] = statusIssuesSprintDevs[status][developer] + 1
                 else:
                     statusIssuesDevs[status].update({developer: 1})
+##                    statusIssuesSprintDevs[status].update({developer: 1})
             else:
                 statusIssuesDevs[status] = {developer: 1}
-    except:
+##                statusIssuesSprintDevs[status] = {developer: 1}
+
+        
+    except Exception as e:
         print("Problema com a issue #" + str(i.number) +" "+str(i.title))
         print("!______________!______________!______________!______________!")
         
@@ -331,9 +337,6 @@ def printLog() :
     print("Quantidade de issues com eventos: " + str(len(events)))
                 
     print("\n")
-    #####################
-    #Estimator.estimate()
-    print("\n")
 
 
 
@@ -395,7 +398,7 @@ def repoMapper(gRepo):
                     issueMapper(issue)
                     print("issue mapped")
                     issueCounter = issueCounter + 1
-                except:
+                except Exception as e:
                     print("Last issue")
                     lookup = False
             for labels in gRepo.get_labels():
@@ -404,7 +407,7 @@ def repoMapper(gRepo):
             issue = gRepo.get_issue(issueId)
             issueMapper(issue)
         printLog()
-    except:
+    except Exception as e:
         print("Issue não existe")
  
 
@@ -448,7 +451,7 @@ def startMetrics():
 ##    metrics = {}
 ##    try:
 ##        metrics = GitMapper.startMetrics(gRepo,PyMongoDB)
-##    except Exception as e:
+##    except Exception as e except Exception as eion as e:
 ##        print("GitMapper error: " + str(e))
 ##    print(metrics.keys())
 
@@ -532,6 +535,8 @@ def startMetrics():
             print("Dentro do periodo de atualização")
         
     if not alreadyMapped or outDated:
+        if outDated:
+            PyMongoDB.deleteRepoByColl(str(gRepo.name),"issuesColl")
         print("Iniciando mapeamendo do repo: " + str(gRepo.name))
         try:
             repoMapper(gRepo)
@@ -557,7 +562,7 @@ def startMetrics():
                      'last_update':str(startTimeMetrics)}
             print(issueMapped.keys())
             issue_id = issuesColl.insert_one(issueMapped).inserted_id
-            print("Colleção adicionada: " + str(issue_id))
+            print("Coleção adicionada: " + str(issue_id))
 
             try:
                 # http://stackoverflow.com/questions/15415709/update-json-file
@@ -565,10 +570,10 @@ def startMetrics():
                 # https://docs.python.org/2/tutorial/inputoutput.html
                 with open('issueMappedDumpJSON.txt', 'w') as outfile:
                     json.dump(issueMapped, outfile)
-            except:
+            except Exception as e:
                 print("Erro no arquivo de dump")
         
-        except:
+        except Exception as e:
             print("Erro ao adicionar os dados ao banco de dados")
     print(datetime.now() - startTimeMetrics)
     print("\n")
@@ -678,8 +683,6 @@ def renderDashboard(org, repo):
     print(graphsURLs)
     a = "Comparação por colaborador"
     b = "Comparação por sprint"
-
-    orgs = ["AAa","BBb","cCC","dDD"]
      
     charts = []
     try:
@@ -690,7 +693,7 @@ def renderDashboard(org, repo):
         charts.append(graphsURLs[4])
         charts.append(graphsURLs[5])
  
-    except:
+    except Exception as e:
         g0=0
         g1=0
         g2=0
@@ -713,7 +716,7 @@ def renderDashboard(org, repo):
         charts.append(eventGraphsURLs[1])
         charts.append(eventGraphsURLs[2])
         charts.append(eventGraphsURLs[3])
-    except:
+    except Exception as e:
         g6=0
         g7=0
         g8=0
@@ -796,13 +799,45 @@ def renderDashboard(org, repo):
     data = eventChart()
 
     repoLabels = repoLabels
+
+    featureTotal = 0
+    reworkTotal = 0
+    techDebtTotal = 0
+    customerReqTotal = 0
+    bugTotal = 0
+    for sID in statusIssuesDevs:
+        print(sID)
+        if sID == "feature":
+            for devs in statusIssuesDevs[sID]:
+                print(statusIssuesDevs[sID][devs])
+                featureTotal = featureTotal + statusIssuesDevs[sID][devs]
+        elif sID == "internal rework" or sID == "external rework" or sID == "REWORK":
+            for devs in statusIssuesDevs[sID]:
+                reworkTotal = reworkTotal + statusIssuesDevs[sID][devs]
+        elif sID == "technical debt":
+            for devs in statusIssuesDevs[sID]:
+                techDebtTotal = techDebtTotal + statusIssuesDevs[sID][devs]
+        elif sID == "customer request":
+            for devs in statusIssuesDevs[sID]:
+                customerReqTotal = customerReqTotal + statusIssuesDevs[sID][devs]
+        elif sID == "bug":
+            for devs in statusIssuesDevs[sID]:
+                bugTotal = bugTotal + statusIssuesDevs[sID][devs]
+                
+    feature = {'label':"feature",'value':featureTotal}
+    reworkFeature = [{'label':"rework",'value':reworkTotal},feature]
+    techDebtFeature = [{'label':"Technical debt",'value':techDebtTotal},feature]
+    customerReqFeature = [{'label':"Customer request",'value':customerReqTotal},feature]
+    bugFeature = [{'label':"bug",'value':bugTotal},feature]
+    print(reworkFeature)
+    print(bugTotal)
     
     print("\n")
     print("To render:")
-    print(repoLabels)
+    print(statusIssuesDevs)
 
     return render_template('dashboard.html', user=session['username'],
-                           render=True, orgs=orgs,
+                           render=True,
                            issuesIndicators=issuesIndicators,
                            org=org, repo=repo, a=a, b=b,
                            charts=charts,
@@ -816,7 +851,11 @@ def renderDashboard(org, repo):
                            areaQADone=data,
                            statusIssuesDevs=statusIssuesDevs,
                            statusPointsDevs=statusPointsDevs,
-                           repoLabels=repoLabels)
+                           repoLabels=repoLabels,
+                           donutReworkFeatureChart=reworkFeature,
+                           donutTechDebtFeatureChart=techDebtFeature,
+                           donutCustomerReqFeatureChart=customerReqFeature,
+                           donutBugFeatureChart=bugFeature)
 
 
 
@@ -906,9 +945,9 @@ def load_all_items_by_user(repository, user):
                                     'issue':tmp_timesheet.issue,
                                     'comment':tmp_timesheet.comment})
         
-        print("ID = {} | User = {} | Date = {}".format(tmp_timesheet._id,
-                                                       tmp_timesheet.user,
-                                                       tmp_timesheet.date))
+##        print("ID = {} | User = {} | Date = {}".format(tmp_timesheet._id,
+##                                                       tmp_timesheet.user,
+##                                                       tmp_timesheet.date))
     if not at_least_one_item:
         print("No items in the database")
     return timesheetsViewModel
@@ -953,7 +992,11 @@ def dashboard():
             print(repo)
             #print(len(issueId))
             try:
-                g = Github(session['username'], session['password'])
+                if session['user2FacAuth'] != None:
+                    g = Github(session['user2FacAuth'])
+                else:
+                    g = Github(session['username'], session['password'])
+
                 gOrg = g.get_organization(org)
                 print("Existe Org ")
                 gRepo = gOrg.get_repo(repo)
@@ -974,9 +1017,9 @@ def dashboard():
                                                        events, graphsURLs,
                                                        eventGraphsURLs, uploadImage)
                     print("Metrics-->Render")
-                except:
+                except Exception as e:
                     print("Ocorreu um erro")
-            except:
+            except Exception as e:
                 print("Erro org ou repo")
                 
         return renderDashboard(org, repo)
@@ -989,6 +1032,7 @@ def dashboard():
 
 @app.route('/timesheet', methods=['GET', 'POST'])
 def timesheet():
+    global gRepo
 
     if auth():
         timesheetsViewModel = []
@@ -1023,6 +1067,8 @@ def timesheet():
             
                 #update new_timesheet and read back from database
                 new_timesheet.begin = 350
+                new_timesheet.end = 750
+
                 test_update(repository, new_timesheet)
 
                 #delete new_timesheet and try to read back from database
@@ -1030,12 +1076,16 @@ def timesheet():
                 
                 
                 print("Rendered timesheet!")
-            except:
+            except Exception as e:
                 print("Fail!")
+
+
+        timesheetGit = TimeGit.getTimeGenData(gRepo, session['username'])
+        print(timesheetGit)
+        
                 
         #display all items from DB
         load_all_items_from_database(repository)
-
             
         dateCalendar = datetime.now().strftime("%Y-%m-%d")
         timesheetsViewModel = load_all_items_by_user(repository, session['username'])
@@ -1079,7 +1129,11 @@ def login():
         print("TimePostLogin")
         print(startTimePostLogin)
         try:
-            login = Github(request.form['username'],request.form['password']).get_user().login
+            if request.form['password'] == None or len(request.form['password']) <= 0:
+                login = Github(request.form['loginOrToken']).get_user().login
+                session['user2FacAuth'] = request.form['loginOrToken']
+            else:
+                login = Github(request.form['loginOrToken'],request.form['password']).get_user().login
             session['username'] = login
             session['password'] = request.form['password']
             user = {'username':login,'last_login':startTimePostLogin}
@@ -1087,7 +1141,7 @@ def login():
             user_id = usersColl.insert_one(user).inserted_id
             print("Usuário adicionado: " + str(user_id))
 
-        except:
+        except Exception as e:
             print("Fail!")
             print(datetime.now() - startTimePostLogin)
             return redirect(url_for('index'))
@@ -1115,6 +1169,10 @@ def logout():
         # remove the username from the session if it's there
         session.pop('username', None)
         session.pop('password', None)
+        try:
+            session.pop('user2FacAuth', None)
+        except:
+            pass
         return redirect(url_for('index'))
     else:
         return redirect(url_for('index'))

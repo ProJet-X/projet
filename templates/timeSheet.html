@@ -2,14 +2,7 @@
 <html>
 <head>
   <title>Timesheet</title>
-
-
-  {% include "topBar.html" %}
-
-  {% include "sideBar.html" %}
-
   
-
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -23,19 +16,83 @@
 
   <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
 
- <script type="text/javascript">
+{% include "topBar.html" %}
+{% include "sideBar.html" %}
+
+<style type="text/css">
+
+/* CHARTS */
+
+#donut-chart {
+  height:400px;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: -webkit-flex;
+   
+}
+
+#container {
+  flex: 1;
+}
+
+
+/* TABLES */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {
+    background-color: #24746c;
+    color: black;
+}
+
+tr:hover {
+  background-color: rgba(26,127,117,0.9);
+  color: white
+}
+
+  table tr:last-child td:first-child {
+    border-bottom-left-radius: 10px;
+}
+
+table tr:last-child td:last-child {
+    border-bottom-right-radius: 10px;
+}
+
+</style>
+
+
+
+<script type="text/javascript">
 
 
   var days = 0;
 
 // Utils
+// http://stackoverflow.com/questions/3066586/get-string-in-yyyymmdd-format-from-js-date-object
+//Use this method - it does handle double digits correctly
+Date.prototype.yyyymmdd = function() {
+  var mm = (this.getMonth() + 1).toString(); // getMonth() is zero-based
+  var dd = this.getDate().toString();
 
-  Date.prototype.yyyymmdd = function() {
-        var mm = this.getMonth() + 1; // getMonth() is zero-based
-        var dd = this.getDate();
-
-        return [this.getFullYear(), !mm[1] && '-', mm, !dd[1] && '-', dd].join(''); // padding
-      };
+  return [this.getFullYear(), mm.length===2 ? '-' : '-0', mm, dd.length===2 ? '-' : '-0', dd].join(''); // padding
+};
 
 
  Date.prototype.addDays = function(days)
@@ -134,9 +191,12 @@
       
   }
 
+  var chartData = []
+
   function addTable(timesheetUserDate) {
 
       resetTable(); 
+      chartData = []
 
       console.log("Will add a table");
     
@@ -147,41 +207,88 @@
       
       var tableBody = document.createElement('TBODY');
       table.appendChild(tableBody);
+
+      var trH = document.createElement('TR');
+      tableBody.appendChild(trH);
+
+      var thH = document.createElement('TH');
+      thH.width='35';
+      thH.appendChild(document.createTextNode("#"));
+      trH.appendChild(thH);
+
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Projeto"));
+      trH.appendChild(thH);
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Começo"));
+      trH.appendChild(thH);
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Fim"));
+      trH.appendChild(thH);
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Adicionado"));
+      trH.appendChild(thH);
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Atividade"));
+      trH.appendChild(thH);
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Tarefa"));
+      trH.appendChild(thH);
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Comentário"));
+      trH.appendChild(thH);
+
+      thH = document.createElement('TH');
+      thH.width='75';
+      thH.appendChild(document.createTextNode("Total"));
+      trH.appendChild(thH);
+
         
       for (i in timesheetUserDate){
          var tr = document.createElement('TR');
          tableBody.appendChild(tr);
 
          var th = document.createElement('TH');
-         th.width='95';
+         th.width='35';
          th.appendChild(document.createTextNode(i));
          tr.appendChild(th);
 
          var totalIssues = 0;
-         for (j in timesheetUserDate[i]){
-             var td = document.createElement('TD');
-             td.width='75';
-             td.appendChild(document.createTextNode(j + ":" + timesheetUserDate[i][j]));
-             tr.appendChild(td);
-             totalIssues = totalIssues + timesheetUserDate[i][j];
-         }
+         var timesheetInputs = ['project',"begin","end","date",'activity',"issue","comment"];
+        for (j in timesheetInputs){
+            console.log(j)
+            totalIssues = 0;
+            var td = document.createElement('TD');
+            td.width='75';
+            td.appendChild(document.createTextNode(timesheetUserDate[i][j]));
+             
+            totalIssues = timesheetUserDate[i]["begin"] + timesheetUserDate[i]["end"];
+
+            tr.appendChild(td);
+        }
+        
+        chartData.push({'label':timesheetUserDate[i]["issue"],'value':totalIssues})
+        
 
          var tht = document.createElement('TH');
          tht.width='55';
-         tht.appendChild(document.createTextNode("Total: " + totalIssues));
+         tht.appendChild(document.createTextNode(totalIssues));
          tr.appendChild(tht);
 
       }
       myTableDiv.appendChild(table);
 
-
-      var br = document.createElement("br");
-      myTableDiv.appendChild(br);
-
-
+      loadCharts(chartData) 
   }
 
-  function loadTimsheetTable() {
+  function loadTimesheetTable() {
     var timesheetsUserDateToShow = retrieveTimesheetByDay(days)
     if (timesheetsUserDateToShow != null) {
       addTable(timesheetsUserDateToShow)
@@ -257,21 +364,66 @@
   function previousDay() {
     days = days - 1
     // document.getElementById("myDynamicTable").remove();
-    loadTimsheetTable() 
+    loadTimesheetTable() 
   }
 
    
   function nextDay() {
     days = days + 1
     // document.getElementById("myDynamicTable").remove();
-    loadTimsheetTable() 
+    loadTimesheetTable() 
   }
-
    
   function load() {
+    console.log("Page load finished");
+      
+  }
 
-      console.log("Page load finished");
+  function clearBox(elementID)
+  {
+    document.getElementById(elementID).innerHTML = "";
+  }
    
+  function loadCharts(chartData) {
+
+    clearBox("donut-chart")
+    clearBox("bar-chart")
+
+    var donut = Morris.Donut({
+      element: 'donut-chart',
+      data: chartData,
+      colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
+    });
+
+    var bar = Morris.Bar({
+      element: 'bar-chart',
+      data: chartData,
+      barColors: function(row, series, type) {
+      if(series.key == 'b')
+      {
+        if(row.y < 70)
+          return "red";
+        else
+          return "blue";  
+      }
+      else
+      {
+        return "green";
+      }
+      },
+      resize: true,
+      barRatio: 0.4,
+      xLabelAngle: 35,
+      hideHover: 'auto',
+      postUnits: ' g/km',
+      formatter: function (y) {
+          return y + " g/km"
+      }
+    });
+
+    donut.setData(chartData);
+    bar.setData(chartData);
+
   }
 
 </script>
@@ -283,38 +435,40 @@
 <fieldset>  
     <legend>Timesheet</legend>
 
-  <form id="myform" class="row form-inline  container-fluid" method="post">
-    <div class="form-group col-sm-2 col-xs-6">
-      <b>Projeto</b>
-      <input type="text" class="form-control" id="project" name="project" placeholder="Project">
-    </div>
+  <form id="myform" class="row form-inline container-fluid" method="post">
+    <div class="form-group">
+      <div class="col-sm-2 col-xs-6">
+        <b>Projeto</b>
+        <input type="text" class="form-control" id="project" name="project" placeholder="Project">
+      </div>
 
-    <div class="form-group col-sm-2 col-xs-6">
-      <b>Começo</b>
-      <input type="text" class="form-control" id="begin" name="begin" placeholder="Begin">
-    </div>
-    <div class="form-group col-sm-2 col-xs-6">
-      <b>Fim</b>
-      <input type="text" class="form-control" id="end" name="end" placeholder="End">
-    </div>
+      <div class="col-sm-2 col-xs-6">
+        <b>Começo</b>
+        <input type="text" class="form-control" id="begin" name="begin" placeholder="Begin">
+      </div>
+      <div class="col-sm-2 col-xs-6">
+        <b>Fim</b>
+        <input type="text" class="form-control" id="end" name="end" placeholder="End">
+      </div>
 
-    <div class="form-group col-sm-2 col-xs-6">
-      <b>Atividade</b>
-      <input type="text" class="form-control" id="activity"  name="activity" placeholder="Activity">
-    </div>
-    <div class="form-group col-sm-2 col-xs-6">
-      <b>Issue</b>
-      <input type="text" class="form-control" id="issue" name="issue" placeholder="Issue">
-    </div>
-    <div class="form-group col-sm-2 col-xs-6">
-      <b>Comentario</b>
-      <input type="text" class="form-control" id="comment" name="comment" placeholder="Comment">
-    </div>
-    
-      <br><br>
-      <br><br>
-    <div class="form-group col-sm-12 col-xs-6" align="center">
-      <input type="submit" id="add" class="btn btn-success" onclick="Javascript:addRow()" value="Adicionar" >
+      <div class="col-sm-2 col-xs-6">
+        <b>Atividade</b>
+        <input type="text" class="form-control" id="activity"  name="activity" placeholder="Activity">
+      </div>
+      <div class="col-sm-2 col-xs-6">
+        <b>Issue</b>
+        <input type="text" class="form-control" id="issue" name="issue" placeholder="Issue">
+      </div>
+      <div class="col-sm-2 col-xs-6">
+        <b>Comentario</b>
+        <input type="text" class="form-control" id="comment" name="comment" placeholder="Comment">
+      </div>
+
+        <br><br>
+        <br><br>
+      <div class="col-sm-12 col-xs-6" align="center">
+        <input type="submit" id="add" class="btn btn-success" onclick="Javascript:addRow()" value="Adicionar" >
+      </div>
     </div>
 
   </form>
@@ -327,20 +481,177 @@
       <h3>Apontamentos</h3>
     </div>
     <div class="form-group col-sm-2 col-xs-2" align="right">
-      <input type="button" id="nextDate" class="btn btn-success" onclick="Javascript:nextDay()" value=">>" >
+      <input type="button" id="nextDay" class="btn btn-success" onclick="Javascript:nextDay()" value=">>" >
     </div>
 
   <div id="myDynamicTable">
     <script type="text/javascript">
-        document.getElementById("demo").innerHTML = loadTimsheetTable();
+        document.getElementById("demo").innerHTML = loadTimesheetTable();
     </script>
 
   </div>
+
+<div class="col-sm-12 col-xs-12">
+  <div class="col-sm-2 col-xs-6">
+    <b>Projeto</b>
+   </div>
+  <div class="col-sm-1 col-xs-6">
+    <b>Começo</b>
+   </div>
+  <div class="col-sm-1 col-xs-6">
+    <b>Fim</b>
+   </div>
+  <div class="col-sm-2 col-xs-6">
+    <b>Atividade</b>
+   </div>
+  <div class="col-sm-2 col-xs-6">
+    <b>Issue</b>
+   </div>
+  <div class="col-sm-4 col-xs-6">
+    <b>Commentário</b>
+ </div>
+
+  {%for o in timesheetsViewModel %}
+  {%if o.date ==  dateCalendar%}
+  <div class="col-sm-2 col-xs-6">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{ o.project }}" disabled>
+   </div>
+  <div class="col-sm-1 col-xs-6">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{ o.begin }}" disabled>
+   </div>
+  <div class="col-sm-1 col-xs-6">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{ o.end }}" disabled>
+   </div>
+  <div class="col-sm-2 col-xs-6">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{ o.activity }}" disabled>
+   </div>
+  <div class="col-sm-2 col-xs-6">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{ o.issue }}" disabled>
+   </div>
+  <div class="col-sm-4 col-xs-6">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{ o.comment }}" disabled>
+ </div>
+  {% endif %} 
+  {% endfor %} 
+</div>
+ 
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-sm-6 col-xs-12">
+           <li align="middle"><h4>Pontos por sprint</h4></li>
+           <div id="donut-chart"></div>
+        </div>
+       
+        <div class="col-md-6">
+          <li align="middle" ><h4>Sprint</h4></li>
+            <div id="bar-chart" ></div>
+        </div>
+    </div>
+  </div>
+
 <p id="demo"></p>
 
 </div>
 
+<script type="text/javascript">
 
+
+/*
+ * Play with this code and it'll update in the panel opposite.
+ *
+ * Why not try some of the options above?
+ */
+
+  /*[
+    {label: "Download Sales", value: 12},
+    {label: "In-Store Sales", value: 30},
+    {label: "Mail-Order Sales", value: 20}
+  ];
+*/
+
+
+  console.log("chartData")
+  console.log(chartData)
+
+
+  $(function () {
+      window.m = Morris.Donut({
+    element: 'donut-chart',
+    data: chartData,
+    colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
+  });
+
+   $(window).on('resize', function() {
+         if (!window.recentResize) {
+            window.m.redraw();
+            window.recentResize = true;
+            setTimeout(function(){ window.recentResize = false; }, 200);
+         }
+      });
+  });
+
+  /*
+   * Play with this code and it'll update in the panel opposite.
+   *
+   * Why not try some of the options above?
+   */
+
+
+   var labelsBarA = 'AAAAA';
+
+  Morris.Bar({
+    element: 'bar-chart',
+    data: chartData ,
+    xkey: 'label',
+    ykeys: ['value'],
+    labels: [labelsBarA],
+    barColors: function(row, series, type) {
+      if(series.key == 'b')
+      {
+        if(row.y < 70)
+          return "red";
+        else
+          return "blue";  
+      }
+      else
+      {
+        return "green";
+      }
+      },
+      resize: true,
+      barRatio: 0.4,
+      xLabelAngle: 35,
+      hideHover: 'auto',
+      postUnits: ' g/km',
+      formatter: function (y) {
+          return y + " g/km"
+      }
+
+  });
+
+
+//   window.Morris.Donut.prototype.setData = function(data, redraw) {
+//     if (redraw == null) {
+//         redraw = true;
+//     }
+//     this.data = data;
+//     this.values = (function() {
+//     var _i, _len, _ref, _results;
+//     _ref = this.data;
+//     _results = [];
+//     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+//         row = _ref[_i];
+//         _results.push(parseFloat(row.value));
+//     }
+//     return _results;
+//     }).call(this);
+//     this.dirty = true;
+//     if (redraw) {
+//         return this.redraw();
+//     }
+// }
+
+</script>
 
 </body>
 </html>

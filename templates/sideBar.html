@@ -44,19 +44,19 @@ ul.sidenav li a {
 ul.sidenav li a.active {
     background-color: #1a7f75;
     color: white;
-    width:100%;
+    width:140%;
 }
 
 ul.sidenav li a:hover:not(.active) {
     background-color: #555;
     color: white;
-    width:100%;
+    width:140%;
 
 }
 
 div.content {
     margin-left: 10%;
-    padding: 16px 10px 16px 16px;
+    padding: 66px 20px 16px 16px;
     height: 40px;
 }
 
@@ -68,16 +68,26 @@ div.content {
         top:46px;
         left:0;
         width:100%;
-      
     }
+
     ul.sidenav li a {
         float: left;
         padding: 15px;
     }
+
     div.content {
       margin-left:0;
       padding: 96px 10px 0px 0px;
     }
+
+    ul.sidenav li a.active {
+    width:100%;
+    }
+
+    ul.sidenav li a:hover:not(.active) {
+        width:100%;
+    }
+
 }
 @media screen and (max-width: 400px){
     ul.sidenav li a {
@@ -93,26 +103,49 @@ img {
     width:80%; 
 }
 
-table, th, td {
-  border: 1px solid black;
-}
 
 </style>
 <script type="text/javascript">
 
-var menu = document.querySelector('.sidenav');
-var anchors = menu.getElementsByTagName('a');
+ function dashboardClick()
+    {
+      if ( !document.getElementById("dashboard").className.match(/(?:^|\s)active(?!\S)/) ) {
 
-for (var i = 0; i < anchors.length; i += 1) {
-  anchors[i].addEventListener('click', function() { clickHandler(anchors[i]) }, false);
-}
+        document.getElementById("dashboard").className = "active";
 
-function clickHandler(anchor) {
-  var hasClass = anchor.getAttribute('class');
-  if (hasClass !== 'active') {
-    anchor.setAttribute('class', 'active');
-  } 
-}
+        document.getElementById("timesheet").className =
+         document.getElementById("timesheet").className.replace( /(?:^|\s)active(?!\S)/g , '' )
+      }
+        
+    }
+
+ function timesheetClick()
+    {
+      if ( !document.getElementById("timesheet").className.match(/(?:^|\s)active(?!\S)/) ) {
+
+        document.getElementById("timesheet").className = "active";
+
+        document.getElementById("dashboard").className =
+         document.getElementById("dashboard").className.replace( /(?:^|\s)active(?!\S)/g , '' )
+      }
+        
+    }
+
+    window.onload = function()
+    {
+        var pathname = window.location.pathname;
+        console.log(pathname);
+        if (pathname == "/dashboard") {
+          document.getElementById("dashboard").className = "active";
+        } else {
+          document.getElementById("timesheet").className = "active";
+          
+        }
+
+        document.getElementById("dashboard").addEventListener( 'click' , dashboardClick );
+        document.getElementById("timesheet").addEventListener( 'click' , timesheetClick );
+    }
+</script
 
 </script>
 
@@ -120,15 +153,14 @@ function clickHandler(anchor) {
 <body>
 
 <ul class="sidenav">
-  <li><a class="active" href="/dashboard">Dashboard</a></li>
-  <li><a href="/timesheet">TimeSheet</a></li>
+  <li><a id="dashboard" href="/dashboard">Dashboard</a></li>
+  <li><a id="timesheet" href="/timesheet">TimeSheet</a></li>
   <li><a href="#" onclick="alert(
     'ProJet \n v0.7.0 \n\n' +  
-    labelsBarA + '\n' + labelsBarB + '\n' )">About ProJet</a></li>
+    'x' + '\n' + 'x' + '\n' )">About ProJet</a></li>
 </ul>
 
-<div class="content">
-</div>
+
 </body>
 </html>
 

@@ -7,3 +7,4 @@ __pycache__/
 *.py[cod]
 issueMappedDumpJSON.txt
 templates/bower_components/
+constants

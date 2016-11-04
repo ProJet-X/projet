@@ -14,7 +14,8 @@ class PyMongoDB():
         usersColl = ""
         issuesColl = ""
         eventsColl = ""
-        timeSheetsColl = ''
+        timeSheetsColl = ""
+        timeSheetsGitColl = ""
 
         def connectMongo():
 
@@ -24,6 +25,7 @@ class PyMongoDB():
                 global usersColl
                 global eventsColl
                 global timeSheetsColl
+                global timeSheetsGitColl
 
 
                 print("\n")
@@ -64,6 +66,12 @@ class PyMongoDB():
                                 print(str(result))
                         except:
                                 pass
+                        try:
+                                timeSheetsGitColl = db.timeSheetsGit
+                                result = timeSheetsGitColl.create_index([('session', pymongo.TEXT)], unique=True)
+                                print(str(result))
+                        except:
+                                pass
                         
 
 
@@ -87,6 +95,9 @@ class PyMongoDB():
                 global timeSheetsColl
                 return timeSheetsColl.find().count()
 
+        def countTimeSheetsGit():
+                global timeSheetsGitColl
+                return timeSheetsGitColl.find().count()
 
         
 
@@ -105,6 +116,10 @@ class PyMongoDB():
         def getTimeSheetsColl():
                 global timeSheetsColl
                 return timeSheetsColl
+        
+        def getTimeSheetsGitColl():
+                global timeSheetsGitColl
+                return timeSheetsGitColl
 
         
         
@@ -132,6 +147,12 @@ class PyMongoDB():
                 print(str(timeSheetsColl.find().count()))
                 timeSheetsColl.drop()
                 print(str(timeSheetsColl.find().count()))
+    
+        def resetTimeSheetsGitColl():
+                global timeSheetsGitColl
+                print(str(timeSheetsGitColl.find().count()))
+                timeSheetsGitColl.drop()
+                print(str(timeSheetsGitColl.find().count()))
 
 
 
@@ -178,9 +199,29 @@ class PyMongoDB():
 #####################################   DELETE   ######################################
 #######################################################################################
                         
-        def deleteTimeSheetsColl():
+        def deleteRepoByColl(repoName=None,coll=None):
+                global issuesColl
+                global usersColl
+                global eventsColl
                 global timeSheetsColl
-      
 
+                affectedRows = 0
 
+                if coll == None:
+                        print("Missing collection name")
+                else:
+                        if repoName == None:
+                                print("Missing repository name")
+                        else:
+                                if coll == "issuesColl":
+                                        result = issuesColl.delete_many({"repo_name": repoName})
+                                elif coll == "usersColl":
+                                        result = usersColl.delete_many({"repo_name": repoName})
+                                elif coll == "eventsColl":
+                                        result = eventsColl.delete_many({"repo_name": repoName})
+                                elif coll == "timeSheetsColl":
+                                        result = timeSheetsColl.delete_many({"repo_name": repoName})
+                                affectedRows = result.deleted_count
+                
+                print(str(affectedRows))
                 

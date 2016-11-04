@@ -18,7 +18,7 @@ class Estimator :
         #segs = int(tstamp - horas * 3600 - mins / 60)
         return '{h}:{m}:{s}'.format(h=hours,m=minutes,s=seconds)
 
-    def estimate(userSearch = 'xanderayes', tagSearch = 'Feature'):
+    def estimate(userSearch = 'xanderayes', tagSearch = 'Feature', pointEstimate=1):
         foi = 0
         while(foi==0):
             #issue = input("issue")
@@ -30,7 +30,6 @@ class Estimator :
                 print("nao")
 
         try:
-            pointEstimate = 3
             times = []
             points = []
             issueList = g.get_issues()

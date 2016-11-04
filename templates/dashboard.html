@@ -9,51 +9,240 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-  <!-- CALENDAR -->
+  <!-- TABS -->
 
 
   <!-- Latest compiled and minified CSS -->
-
-  <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+ 
 
 {% include "topBar.html" %}
 {% include "sideBar.html" %}
 
-<script type="text/javascript">
+<style type="text/css">
 
-  window.onload = function setOrgs() {
-  var myDivOrgs = document.getElementById("myDivOrgs");
+/* CHARTS */
+#donut-points-sprints {
+  height:400px;
+}
 
-  //Create array of options to be added
-  var array = JSON.parse("{{orgs | safe }}");
+#donut-issues-sprints {
+  height:400px;
+}
 
-  //Create and append select list
-  var selectList = document.createElement("select");
-  selectList.setAttribute("id", "mySelect");
-  myDivOrgs.appendChild(selectList);
+html, body {
+    height: 100%;
+    margin: 0;
+}
 
-  //Create and append the options
-  for (var i = 0; i < array.length; i++) {
-      var option = document.createElement("option");
-      option.setAttribute("value", array[i]);
-      option.text = array[i];
-      selectList.appendChild(option);
-  }
+body {
+    display: -webkit-flex;
+   
+}
+
+#container {
+  flex: 1;
+}
+
+/* TABLES */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {
+    background-color: #24746c;
+    color: black;
+}
+
+tr:hover {
+  background-color: rgba(26,127,117,0.9);
+  color: white
+}
+
+  table tr:last-child td:first-child {
+    border-bottom-left-radius: 10px;
+}
+
+table tr:last-child td:last-child {
+    border-bottom-right-radius: 10px;
+}
+
+
+/* TABS */
+
+
+
+.tab-box .panel-heading > .nav-tabs {
+    float: right;
+    margin-top: -2px;
+    display: inline-block;
+    border-bottom: 0;
+}
+.tab-box .panel-heading > .nav-tabs > li > a {
+    border: 0;
+    padding: 6px 7px;
+}
+@media (min-width: 444px) {
+    .tab-box .panel-heading > .nav-tabs > li > a {
+        padding: 6px 15px;
+    }
+}
+.tab-box .panel-heading > .nav-tabs > li.active > a {
+    border-left: 1px solid #dddddd;
+    border-right: 1px solid #dddddd;
+    border-bottom: 0;
+    border-top: 1px solid #7c1c1d;
+    background: #fff;
+}
+.panel.panel-default > .panel-heading h3 {
+    display: inline-block;
+}
+svg {
+    width: 100% !important;
 }
 
 
 
+body {font-family: "Lato", sans-serif;}
 
+ul.tab {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+/* Float the list items side by side */
+ul.tab li {float: left;}
+
+/* Style the links inside the list items */
+ul.tab li a {
+    display: inline-block;
+    color: black;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: 0.3s;
+    font-size: 17px;
+}
+
+/* Change background color of links on hover */
+ul.tab li a:hover {
+    background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+ul.tab li a:focus, .active {
+    background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 16px 16px 120px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+    -webkit-animation: fadeEffect 1s;
+    animation: fadeEffect 1s;
+}
+
+@-webkit-keyframes fadeEffect {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+@keyframes fadeEffect {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+.topleft {
+ float: left;
+ cursor: pointer;
+ font-size: 20px;
+}
+.topright {
+ float: right;
+ cursor: pointer;
+ font-size: 20px;
+}
+
+.topright:hover {color: red;}
+
+/* TOOLTIP */
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color:rgba(0,0,0,0.65);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -60px;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+</style>
+
+
+
+
+<script type="text/javascript">
 
 function addTable() {
       
     var myTableDiv = document.getElementById("myDynamicTable");
     
+    var repoLabels = JSON.parse('{{repoLabels|tojson|safe}}');
+
     var statusIssuesDevs = JSON.parse('{{statusIssuesDevs|tojson|safe}}');
     var statusPointsDevs = JSON.parse('{{statusPointsDevs|tojson|safe}}');
+    console.log("Will add a table");
+
+
+    var h3Issues = document.createElement("h3");
+    h3Issues.innerHTML="Numero de tarefas: ";
+    myTableDiv.appendChild(h3Issues);
 
     var table = document.createElement('TABLE');
-    table.border='1';
     
     var tableBody = document.createElement('TBODY');
     table.appendChild(tableBody);
@@ -64,6 +253,17 @@ function addTable() {
 
        var th = document.createElement('TH');
        th.width='95';
+       
+       var color = ""
+       for (label in repoLabels) {
+
+         if (repoLabels[label]["name"] == i) {
+          color = "#"+repoLabels[label]["color"]
+          console.log(color);
+         }
+       };
+
+       th.style.background = color;
        th.appendChild(document.createTextNode(i));
        tr.appendChild(th);
 
@@ -78,15 +278,20 @@ function addTable() {
 
        var tht = document.createElement('TH');
        tht.width='55';
+       tht.style.background = color;
        tht.appendChild(document.createTextNode("Total: " + totalIssues));
        tr.appendChild(tht);
 
     }
     myTableDiv.appendChild(table);
 
-
     var br = document.createElement("br");
     myTableDiv.appendChild(br);
+
+
+    var h3Points = document.createElement("h3");
+    h3Points.innerHTML="Pontos: ";
+    myTableDiv.appendChild(h3Points);
 
     var pointHeader = document.createElement("h2");
     myTableDiv.appendChild(pointHeader);
@@ -104,6 +309,15 @@ function addTable() {
 
        var th2 = document.createElement('TH');
        th2.width='95';
+       var color = ""
+       for (label in repoLabels) {
+
+         if (repoLabels[label]["name"] == i) {
+          color = "#"+repoLabels[label]["color"]
+          console.log(color);
+         }
+       };
+       th2.style.background = color;
        th2.appendChild(document.createTextNode(i));
        tr2.appendChild(th2);
  
@@ -113,11 +327,12 @@ function addTable() {
            td2.width='75';
            td2.appendChild(document.createTextNode(j + ":" + statusPointsDevs[i][j]));
            tr2.appendChild(td2);
-           totalIssues2 = totalIssues2 + statusIssuesDevs[i][j];
+           totalIssues2 = totalIssues2 + statusPointsDevs[i][j];
        }
 
        var tht2 = document.createElement('TH');
        tht2.width='95';
+       tht2.style.background = color;
        tht2.appendChild(document.createTextNode("Total: " + totalIssues2));
        tr2.appendChild(tht2);
     }
@@ -143,85 +358,176 @@ function addTable() {
 
     <div class="form-group col-sm-4 col-xs-4">
       <b>Repositório</b>
-      <input type="text" class="form-control" name="repo" value="progest" placeholder="repo">
-    </div>
-      <div class="form-group col-sm-2 col-xs-2">
-      <input type="checkbox" name="locally">Download chart image<br> 
+      <input type="text" class="form-control" name="repo" value="ProJet" placeholder="repo">
     </div>
      
-      <div class="form-group col-sm-2 col-xs-2">
+    <div class="form-group col-sm-2 col-xs-2">
       <input type="submit" id="go" class="btn btn-success" value="ProJet">
-     </div>
+    </div>
   </fieldset>
  
- <br><br>    
+ <br>   
   
 </form>
-{% if render %}
+
+
   <legend>Indicadores gerais</legend>
   <fieldset>
-  <table>
-  <tr>
-  <th>  Issues  </th>
-  <th>  Tarefas  </th>
-  <th>  Pull requests  </th>
-  <th>  Pontos  </th>
-  <th>  Tarefas planeadas </th>
-  <th>  Tarefas não planejadas </th>
-  </tr>
-  <tr>
-  <td>  {{issuesIndicators[0]}} </td>
-  <td>  {{issuesIndicators[1]}} </td>
-  <td>  {{issuesIndicators[2]}} </td>
-  <td>  {{issuesIndicators[3]}} </td> 
-  <td>  {{issuesIndicators[4]}} </td>
-  <td>  {{issuesIndicators[5]}} </td>
-  </tr>
-  </table>
-  
+
+  <div class="col-sm-12 col-xs-12">
+  <div class="col-sm-2 col-xs-4">
+    <b>Tarefas totais</b>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <b>Tarefas</b>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <b>Pull requests</b>
+   </div>
+  <div class="tooltip col-sm-2 col-xs-4">
+    <b>Pontos</b>
+  <span class="tooltiptext">Tooltip text</span>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <b>Tarefas planejadas</b>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <b>Tarefas não planejadas</b>
+ </div>
+
+  <div class="col-sm-2 col-xs-4">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{issuesIndicators[0]}}" disabled>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{issuesIndicators[1]}}" disabled>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{issuesIndicators[2]}}" disabled>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{issuesIndicators[3]}}" disabled>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{issuesIndicators[4]}}" disabled>
+   </div>
+  <div class="col-sm-2 col-xs-4">
+    <input type="text" class="form-control" id="comment" name="comment" value="{{issuesIndicators[5]}}" disabled>
+ </div>
+
+</div>
+
+
+<br><br><br><br><br><br>
+
+
+<!-- <div id="monitor" class="panel panel-default tab-box">
+    <div class="panel-heading">
+         <h3 class="panel-title">
+            <i class="fa fa-signal"></i>
+            Monitoring report
+        </h3>
+
+        <ul class="nav nav-tabs">
+            <li class="active"> <a href="#fuel-tab" data-toggle="tab" data-identifier="line, donut">Fuel data</a>
+
+            </li>
+            <li> <a href="#co2-tab" data-toggle="tab" data-identifier="bar1">Co2 data</a>
+
+            </li>
+        </ul>
+    </div>
+    <div class="panel-body">
+        <div class="tab-content">
+            <div id="fuel-tab" class="tab-pane active">
+                <div class="row">
+                    <div class="col-sm-12 col-md-7 chart">
+                        <div class="caption">Fuel consumption last 12 months <span class="label label-default">Liter/100km</span>
+
+                        </div>
+                        <div id="donut-points-sprints"></div>
+                        <div class="legend"> <span id="city" class="label">City</span>
+ <span id="highway" class="label">Highway</span>
+ <span id="idle" class="label">Idle</span>
+
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-5 chart">
+                        <div class="caption">Fuel projection this month</div>
+                        <div id="donut-issues-sprints"></div>
+                        <div class="legend"> <span id="projection" class="label">Projection</span>
+ <span id="today" class="label">Until today</span>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="co2-tab" class="tab-pane">
+                <div class="row">
+                    <div class="col-xs-12 chart">
+                        <div class="caption">Monthly Co2 Emissions <span class="label label-default">g/km</span>
+
+                        </div>
+                        <div id="co2-emissions"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+ -->
+
+
+
+
 
   <div class="container">
     <div class="row">
-        <div class="col-md-6">
-           <li align="middle">Pontos por sprint</li>
+        <div class="col-md-6 col-sm-6 col-xs-12">
+           <li align="middle"><h3>Pontos por sprint</h3></li>
            <div id="donut-points-sprints"></div>
         </div>
-        <div class="col-md-6">
-          <li align="middle" >Issues por sprint</li>
+        <div class="col-md-6 col-sm-6 col-xs-12">
+          <li align="middle"><h3>Tarefas por sprint</h3></li>
           <div id="donut-issues-sprints" ></div>
         </div>
     </div>
   </div>
 
-  <br><br><br><br>
+
 
   <div class="container">
     <div class="row">
         <div class="col-md-6">
-           <li align="middle"><h3>Dev</h3></li>
+           <li align="middle"><h3>Devs</h3></li>
             <div id="bar-chart-assignees" ></div>
         </div>
         <div class="col-md-6">
-          <li align="middle" ><h2>Sprint</h2></li>
+          <li align="middle" ><h3>Sprint</h3></li>
             <div id="bar-chart-status" ></div>
         </div>
     </div>
   </div>
 
-  <br><br><br><br>
-
   <div class="container">
     <div class="row">
         <div class="col-md-6">
-           <li align="middle">Status por dia</li>
+           <li align="middle"><h3>Status por dia</h3></li>
               <div id="area-example" ></div>
         </div>
         <div class="col-md-6">
-          <li align="middle" >Pontos e Issues por dia</li>
+          <li align="middle"><h3>Pontos e Issues por dia</h3></li>
              <div id="myfirstchart" style="height: 250px;"></div>
         </div>
     </div>
   </div>
+
+
+{% if render %}
+
+  <br> 
+
+  <br><br>
+
 
   <!-- OLD CHARTS -->
   <!-- <img src={{ charts[0] }} alt="ChartA" align="middle">
@@ -238,13 +544,39 @@ function addTable() {
   <img src={{ charts[9] }} alt="ChartJ" align="middle"> -->
 
 
-  <h2>Tags/Labels</h2>
+  <h2>Status - Tags/Labels</h2>
+
+  <div class="container">
+    <div class="row">
+        <div class="col-md-3 col-sm-3 col-xs-3">
+           <li align="middle">Rework/Features</li>
+           <div id="donut-rework-feature"></div>
+        </div>
+        <div class="col-md-3 col-sm-3 col-xs-3">
+          <li align="middle">Debito técnico/Features</li>
+          <div id="donut-debt-feature" ></div>
+        </div>
+        <div class="col-md-3 col-sm-3 col-xs-3">
+           <li align="middle">Customer request/Features</li>
+           <div id="donut-customer-req-feature"></div>
+        </div>
+      <div class="col-md-3 col-sm-3 col-xs-3">
+           <li align="middle">Bugs/Features</li>
+           <div id="donut-bug-feature"></div>
+        </div>
+     
+    </div>
+  </div>
+
 
 <div id="myDynamicTable">
   <script type="text/javascript">
+    if (addTable() != null) {
       document.getElementById("demo").innerHTML = addTable();
+    };
+    
+  
   </script>
-
 </div>
 
 {% else %}
@@ -257,7 +589,18 @@ function addTable() {
 <br><br>
 <script type="text/javascript">
 
+$('ul.nav a').on('shown.bs.tab', function (e) {
+    
+    var types = $(this).attr("data-identifier");
+    var typesArray = types.split(",");
+    $.each(typesArray, function (key, value) {
+        console.log("AAAAA")
+        console.log(value)
+        eval(value + ".redraw()");
+    })
+});
 
+$(function () {
 /*
  * Play with this code and it'll update in the panel opposite.
  *
@@ -266,23 +609,133 @@ function addTable() {
 
 var dataDonutPointsChart = JSON.parse('{{donutSprintsPointsChart|tojson|safe}}');
 var dataDonutIssuesChart = JSON.parse('{{donutSprintsIssuesChart|tojson|safe}}');
+
+var donutReworkFeatureChart = JSON.parse('{{donutReworkFeatureChart|tojson|safe}}');
+var donutTechDebtFeatureChart = JSON.parse('{{donutTechDebtFeatureChart|tojson|safe}}');
+var donutCustomerReqFeatureChart = JSON.parse('{{donutCustomerReqFeatureChart|tojson|safe}}');
+var donutBugFeatureChart = JSON.parse('{{donutBugFeatureChart|tojson|safe}}');
   /*[
     {label: "Download Sales", value: 12},
     {label: "In-Store Sales", value: 30},
     {label: "Mail-Order Sales", value: 20}
   ];
 */
-Morris.Donut({
+
+$(function () {
+    window.m = Morris.Donut({
   element: 'donut-points-sprints',
   data: dataDonutPointsChart,
-  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
+  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400'],
+  resize: true,
+  
+});
+ $(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
 });
 
-Morris.Donut({
+$(function () {
+    window.m = Morris.Donut({
   element: 'donut-issues-sprints',
+  resize: true,
   data: dataDonutIssuesChart,
   colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
 });
+ $(window).on("resize", function(){
+      m.redraw();
+   });
+});
+
+
+
+
+$(function () {
+    window.m = donut = Morris.Donut({
+  element: 'donut-rework-feature',
+  data: donutReworkFeatureChart,
+  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400'],
+  resize: true,
+  
+});
+ $(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
+});
+
+
+$(function () {
+    window.m = donut = Morris.Donut({
+  element: 'donut-debt-feature',
+  data: donutTechDebtFeatureChart,
+  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400'],
+  resize: true,
+  
+});
+ $(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
+});
+
+
+$(function () {
+    window.m = donut = Morris.Donut({
+  element: 'donut-customer-req-feature',
+  data: donutCustomerReqFeatureChart,
+  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400'],
+  resize: true,
+  
+});
+ $(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
+});
+
+
+
+$(function () {
+    window.m = donut = Morris.Donut({
+  element: 'donut-bug-feature',
+  data: donutBugFeatureChart,
+  colors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400'],
+  resize: true,
+  
+});
+ $(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
+});
+// console.log("dataDonutIssuesChart")
+// var donut = Morris.Donut({
+//   element: 'donut-issues-sprints',
+//   data: dataDonutIssuesChart
+// });
+
+// $('lodon').on('click', function() {
+//     donut.setData(dataDonutIssuesChart);
+//     console.log("dataDonutIssuesChart")
+// });
+
+
 
 
 /*
@@ -295,8 +748,11 @@ Morris.Donut({
  var labelsBarA = '{{labelsBarA}}';
  var labelsBarB = '{{labelsBarB}}';
 
-Morris.Bar({
+
+$(function () {
+  window.m = Morris.Bar({
   element: 'bar-chart-assignees',
+  resize: true,
   data: dataBarChartAssignees ,
   xkey: 'y',
   ykeys: ['a', 'b'],
@@ -309,11 +765,28 @@ Morris.Bar({
     else {
       return '#000';
     }
+  },
+  barRatio: 0.4,
+  xLabelAngle: 35,
+  hideHover: 'auto',
+  postUnits: ' g/km',
+  formatter: function (y) {
+      return y + " g/km"
   }
 
 });
+    $(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
+});
 
-Morris.Bar({
+
+$(function () {
+    window.m = Morris.Bar({
   element: 'bar-chart-status',
   data: dataBarChartStatus ,
   xkey: 'y',
@@ -331,13 +804,30 @@ Morris.Bar({
   {
     return "green";
   }
-}
+  },
+  resize: true,
+  barRatio: 0.4,
+  xLabelAngle: 35,
+  hideHover: 'auto',
+  postUnits: ' g/km',
+  formatter: function (y) {
+      return y + " g/km"
+  }
+});
+$(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
 });
 
 
 
 
-new Morris.Line({
+$(function () {
+    window.m = new Morris.Line({
   // ID of the element in which to draw the chart.
   element: 'myfirstchart',
   // Chart data records -- each entry in this array corresponds to a point on
@@ -359,7 +849,14 @@ new Morris.Line({
    ['Value'],
   lineColors: ['#fff400','#00ff04','#00ecff','#ff0000','#ff7400']
 });
-
+$(window).on('resize', function() {
+       if (!window.recentResize) {
+          window.m.redraw();
+          window.recentResize = true;
+          setTimeout(function(){ window.recentResize = false; }, 200);
+       }
+    });
+});
 /*
  * Play with this code and it'll update in the panel opposite.
  *
@@ -372,7 +869,9 @@ var labelsBarB = '{{labelsBarB}}';
  var areaQADone = JSON.parse('{{areaQADone|tojson|safe}}');
 
 
-Morris.Area({
+
+$(function () {
+    window.m =  Morris.Area({
   element: 'area-example',
   
   data: areaQADone,/*[
@@ -386,8 +885,195 @@ Morris.Area({
   ],*/
   xkey: 'y',
   ykeys: ['a', 'b'],
-  labels: [labelsBarA, labelsBarB]
+  labels: [labelsBarA, labelsBarB],
+  resize: true,
+  barRatio: 0.4,
+  xLabelAngle: 35,
+  hideHover: 'auto',
+  postUnits: ' g/km',
+  formatter: function (y) {
+      return y + " g/km"
+  }
 });
+ $(window).on("resize", function(){
+      m.redraw();
+   });
+});
+
+});
+
+
+// Morris graphs ---------------------------------------------------------- //
+// on doc ready
+// $(function () {
+//     // Fuel consumption //
+//     // Data set for fuel consumption
+//     var fuel_data = [{
+//         "period": "2013-01",
+//         "city": 66,
+//         "highway": 34,
+//         "idle": 9
+//     }, {
+//         "period": "2013-02",
+//         "city": 62,
+//         "highway": 33,
+//         "idle": 8
+//     }, {
+//         "period": "2013-03",
+//         "city": 61,
+//         "highway": 32,
+//         "idle": 7
+//     }, {
+//         "period": "2013-04",
+//         "city": 66,
+//         "highway": 32,
+//         "idle": 6
+//     }, {
+//         "period": "2013-05",
+//         "city": 67,
+//         "highway": 31,
+//         "idle": 5
+//     }, {
+//         "period": "2013-06",
+//         "city": 68,
+//         "highway": 43,
+//         "idle": 7
+//     }, {
+//         "period": "2013-07",
+//         "city": 62,
+//         "highway": 32,
+//         "idle": 5
+//     }, {
+//         "period": "2013-08",
+//         "city": 61,
+//         "highway": 32,
+//         "idle": 5
+//     }, {
+//         "period": "2013-09",
+//         "city": 58,
+//         "highway": 32,
+//         "idle": 7
+//     }, {
+//         "period": "2013-10",
+//         "city": 60,
+//         "highway": 32,
+//         "idle": 7
+//     }, {
+//         "period": "2013-11",
+//         "city": 60,
+//         "highway": 32,
+//         "idle": 6
+//     }, {
+//         "period": "2013-12",
+//         "city": 62,
+//         "highway": 32,
+//         "idle": 8
+//     }];
+//     // Line chart parameters for fuel consumption
+//     var fuel_consumption = {
+//         element: 'fuel-consumption',
+//         hideHover: 'auto',
+//         data: fuel_data,
+//         xkey: 'period',
+//         xLabels: 'month',
+//         ykeys: ['city', 'highway', 'idle'],
+//         postUnits: ' l/100km',
+//         labels: ['City', 'Highway', 'Idle'],
+//         resize: true,
+//         lineColors: ['#A52A2A', '#72A0C1', '#7BB661']
+//         //yLabelFormat: function(y) { return y.toString() + ' l/100km'; }
+//     }
+
+//     // Make a line chart from the parameters
+//     line = Morris.Line(fuel_consumption)
+//     // / Fuel consumption //
+
+//     // Fuel projection //
+//     // Data set for fuel projection
+//     var projection_data = [{
+//         label: 'Until today',
+//         value: 180
+//     }, {
+//         label: 'Projected',
+//         value: 400
+//     }, ]
+//     // Donut chart parameters for fuel projection
+//     var fuel_projection = {
+//         element: 'fuel-projection',
+//         hideHover: 'auto',
+//         resize: true,
+//         data: projection_data,
+//         colors: ['#7BB661', '#72A0C1'],
+//         formatter: function (y) {
+//             return y + " liters"
+//         }
+//     }
+
+//     // Make a donut chart from the parameters
+//     donut = Morris.Donut(fuel_projection)
+//     // / Fuel projection //
+
+    // // Fuel emissions //
+    // // Data set for fuel emissions
+    // var co2_data = [{
+    //     month: 'Jan',
+    //     emissions: 35
+    // }, {
+    //     month: 'Feb',
+    //     emissions: 37
+    // }, {
+    //     month: 'Mar',
+    //     emissions: 40
+    // }, {
+    //     month: 'Apr',
+    //     emissions: 38
+    // }, {
+    //     month: 'Maj',
+    //     emissions: 39
+    // }, {
+    //     month: 'Jun',
+    //     emissions: 42
+    // }, {
+    //     month: 'Jul',
+    //     emissions: 37
+    // }, {
+    //     month: 'Aug',
+    //     emissions: 65
+    // }, {
+    //     month: 'Sep',
+    //     emissions: 38
+    // }, {
+    //     month: 'Okt',
+    //     emissions: 45
+    // }, {
+    //     month: 'Nov',
+    //     emissions: 41
+    // }, {
+    //     month: 'Dec',
+    //     emissions: 41
+    // }]
+    // //Bar chart parameters for CO2 emissions
+    // var co2_emissions = {
+    //     element: 'co2-emissions',
+    //     resize: true,
+    //     data: co2_data,
+    //     xkey: 'month',
+    //     ykeys: ['emissions'],
+    //     labels: ['Co2 emissions'],
+    //     barRatio: 0.4,
+    //     xLabelAngle: 35,
+    //     hideHover: 'auto',
+    //     postUnits: ' g/km',
+    //     formatter: function (y) {
+    //         return y + " g/km"
+    //     }
+    // }
+
+    // // Make a bar chart from the parameters
+    // bar1 = Morris.Bar(co2_emissions)
+    // / Fuel emisisons //
+// });
+// / Morris graphs -------------------------------------------------------- //
 
 </script>
 </body>
